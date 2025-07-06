@@ -4,7 +4,7 @@ export const ticketsService = {
   // Get all categories with subcategories
   async getCategories() {
     try {
-      const response = await api.get('/categories');
+      const response = await api.get('/api/categories'); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to fetch categories');
@@ -14,7 +14,7 @@ export const ticketsService = {
   // Get support persons by category
   async getSupportPersons(categoryId) {
     try {
-      const response = await api.get(`/categories/${categoryId}/support-persons`);
+      const response = await api.get(`/api/categories/${categoryId}/support-persons`); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to fetch support persons');
@@ -24,7 +24,7 @@ export const ticketsService = {
   // Create a new ticket
   async createTicket(ticketData) {
     try {
-      const response = await api.post('/tickets', ticketData);
+      const response = await api.post('/api/tickets', ticketData); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to create ticket');
@@ -34,7 +34,7 @@ export const ticketsService = {
   // Get user's tickets
   async getMyTickets() {
     try {
-      const response = await api.get('/tickets');
+      const response = await api.get('/api/tickets'); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to fetch your tickets');
@@ -44,7 +44,7 @@ export const ticketsService = {
   // Get all tickets (admin/manager view)
   async getAllTickets() {
     try {
-      const response = await api.get('/tickets/all');
+      const response = await api.get('/api/tickets/all'); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to fetch all tickets');
@@ -54,7 +54,7 @@ export const ticketsService = {
   // Get specific ticket by ID
   async getTicket(ticketId) {
     try {
-      const response = await api.get(`/tickets/${ticketId}`);
+      const response = await api.get(`/api/tickets/${ticketId}`); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to fetch ticket');
@@ -69,7 +69,7 @@ export const ticketsService = {
         payload.assigned_to = assignedTo;
       }
       
-      const response = await api.put(`/tickets/${ticketId}/status`, payload);
+      const response = await api.put(`/api/tickets/${ticketId}/status`, payload); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to update ticket status');
@@ -79,7 +79,7 @@ export const ticketsService = {
   // Approve ticket (manager only)
   async approveTicket(ticketId) {
     try {
-      const response = await api.put(`/tickets/${ticketId}/approve`);
+      const response = await api.put(`/api/tickets/${ticketId}/approve`); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to approve ticket');
@@ -89,7 +89,7 @@ export const ticketsService = {
   // Get ticket history
   async getTicketHistory(ticketId) {
     try {
-      const response = await api.get(`/tickets/${ticketId}/history`);
+      const response = await api.get(`/api/tickets/${ticketId}/history`); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to fetch ticket history');

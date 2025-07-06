@@ -2,11 +2,13 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_URL || 'https://sg-prod-bdyapp-pulsebackend-a9b5gsd9f8d7f5f7.southeastasia-01.azurewebsites.net',
+  timeout: 30000, // Increased timeout for Azure
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: true, // Important for CORS with credentials
 });
 
 // Request interceptor to add auth token
@@ -16,9 +18,20 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log the request for debugging
+    console.log('API Request:', {
+      method: config.method,
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      headers: config.headers
+    });
+    
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -26,9 +39,17 @@ api.interceptors.request.use(
 // Response interceptor to handle errors globally
 api.interceptors.response.use(
   (response) => {
+    console.log('API Response:', response.status, response.data);
     return response.data;
   },
   (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config
+    });
+    
     const { response } = error;
     
     if (response?.status === 401) {

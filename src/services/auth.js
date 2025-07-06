@@ -4,7 +4,7 @@ export const authService = {
   // Login with email
   async login(email) {
     try {
-      const response = await api.post('/auth/login', { email });
+      const response = await api.post('/api/auth/login', { email }); // Added /api prefix
       
       if (response.success) {
         const { token, user } = response.data;
@@ -25,7 +25,7 @@ export const authService = {
   // Get current user profile
   async getProfile() {
     try {
-      const response = await api.get('/auth/profile');
+      const response = await api.get('/api/auth/profile'); // Added /api prefix
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to get profile');
@@ -35,7 +35,7 @@ export const authService = {
   // Logout
   async logout() {
     try {
-      await api.post('/auth/logout');
+      await api.post('/api/auth/logout'); // Added /api prefix
     } catch (error) {
       // Continue with logout even if API call fails
       console.error('Logout API error:', error);
