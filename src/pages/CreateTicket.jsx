@@ -192,8 +192,8 @@ const CreateTicket = () => {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
+            <div className="mx-auto w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-6">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             
@@ -203,7 +203,7 @@ const CreateTicket = () => {
             
             <p className="text-gray-600 mb-6">
               Your support ticket has been submitted and assigned ticket number{' '}
-              <span className="font-mono font-semibold text-blue-600">
+              <span className="font-mono font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded">
                 {createdTicket?.ticket_number}
               </span>
             </p>
@@ -211,7 +211,7 @@ const CreateTicket = () => {
             <div className="flex gap-3 justify-center">
               <button 
                 onClick={() => navigate('/my-tickets')}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
               >
                 View My Tickets
               </button>
@@ -233,7 +233,7 @@ const CreateTicket = () => {
                     mentioned_support_person: ''
                   });
                 }}
-                className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200"
+                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 Create Another Ticket
               </button>
@@ -247,23 +247,23 @@ const CreateTicket = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-6">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </button>
           
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Ticket className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-gray-100 rounded-xl">
+              <Ticket className="w-6 h-6 text-gray-900" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Create Support Ticket</h1>
-              <p className="text-gray-600">Submit a request for technical support or assistance</p>
+              <h1 className="text-3xl font-bold text-gray-900">Create Support Ticket</h1>
+              <p className="text-gray-600 mt-1">Submit a request for technical support or assistance</p>
             </div>
           </div>
         </div>
@@ -273,18 +273,18 @@ const CreateTicket = () => {
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-4">
           {loading ? (
-            <div className="bg-white rounded-lg shadow p-8">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Loading form...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <span className="ml-3 text-gray-600 font-medium">Loading form...</span>
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
                     Ticket Title *
                   </label>
                   <input
@@ -293,25 +293,25 @@ const CreateTicket = () => {
                     value={formData.title}
                     onChange={handleInputChange}
                     placeholder="Brief description of your issue..."
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.title ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all ${
+                      errors.title ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                     }`}
                   />
-                  {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                  {errors.title && <p className="mt-2 text-sm text-red-600 font-medium">{errors.title}</p>}
                 </div>
 
                 {/* Category and Subcategory */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
                       Category *
                     </label>
                     <select
                       name="category_id"
                       value={formData.category_id}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.category_id ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all ${
+                        errors.category_id ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                       }`}
                     >
                       <option value="">Select a category</option>
@@ -319,19 +319,19 @@ const CreateTicket = () => {
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
                     </select>
-                    {errors.category_id && <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>}
+                    {errors.category_id && <p className="mt-2 text-sm text-red-600 font-medium">{errors.category_id}</p>}
                   </div>
 
                   {getCurrentCategory()?.subcategories?.length > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-900 mb-3">
                         Subcategory
                       </label>
                       <select
                         name="subcategory_id"
                         value={formData.subcategory_id}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent hover:border-gray-400 transition-all"
                       >
                         <option value="">Select a subcategory</option>
                         {getCurrentCategory().subcategories.map(sub => (
@@ -345,7 +345,7 @@ const CreateTicket = () => {
                 {/* Subcategory Text */}
                 {shouldShowSubcategoryText() && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
                       Please specify *
                     </label>
                     <input
@@ -354,11 +354,11 @@ const CreateTicket = () => {
                       value={formData.subcategory_text}
                       onChange={handleInputChange}
                       placeholder="Enter the specific details..."
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.subcategory_text ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all ${
+                        errors.subcategory_text ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                       }`}
                     />
-                    {errors.subcategory_text && <p className="mt-1 text-sm text-red-600">{errors.subcategory_text}</p>}
+                    {errors.subcategory_text && <p className="mt-2 text-sm text-red-600 font-medium">{errors.subcategory_text}</p>}
                   </div>
                 )}
 
@@ -366,7 +366,7 @@ const CreateTicket = () => {
                 {shouldShowSoftwareFields() && (
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-900 mb-3">
                         Software Name
                       </label>
                       <input
@@ -375,12 +375,12 @@ const CreateTicket = () => {
                         value={formData.software_name}
                         onChange={handleInputChange}
                         placeholder="e.g., SAP, Oracle, Microsoft Teams..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent hover:border-gray-400 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-900 mb-3">
                         System URL
                       </label>
                       <input
@@ -389,9 +389,9 @@ const CreateTicket = () => {
                         value={formData.system_url}
                         onChange={handleInputChange}
                         placeholder="https://..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent hover:border-gray-400 transition-all"
                       />
-                      <p className="mt-1 text-sm text-gray-500">URL of the system you're having issues with</p>
+                      <p className="mt-2 text-sm text-gray-500">URL of the system you're having issues with</p>
                     </div>
                   </div>
                 )}
@@ -399,15 +399,15 @@ const CreateTicket = () => {
                 {/* Type and Urgency */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
                       Request Type *
                     </label>
                     <select
                       name="type"
                       value={formData.type}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.type ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all ${
+                        errors.type ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                       }`}
                     >
                       <option value="">Select request type</option>
@@ -415,19 +415,19 @@ const CreateTicket = () => {
                       <option value="Application Error">Application Error</option>
                       <option value="Change Request">Change Request</option>
                     </select>
-                    {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type}</p>}
+                    {errors.type && <p className="mt-2 text-sm text-red-600 font-medium">{errors.type}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
                       Urgency *
                     </label>
                     <select
                       name="urgency"
                       value={formData.urgency}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.urgency ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all ${
+                        errors.urgency ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                       }`}
                     >
                       <option value="">Select urgency level</option>
@@ -435,21 +435,21 @@ const CreateTicket = () => {
                       <option value="Medium">Medium - Normal</option>
                       <option value="Low">Low - When possible</option>
                     </select>
-                    {errors.urgency && <p className="mt-1 text-sm text-red-600">{errors.urgency}</p>}
+                    {errors.urgency && <p className="mt-2 text-sm text-red-600 font-medium">{errors.urgency}</p>}
                   </div>
                 </div>
 
                 {/* Support Person */}
                 {supportPersons.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
                       Preferred Support Person (Optional)
                     </label>
                     <select
                       name="mentioned_support_person"
                       value={formData.mentioned_support_person}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent hover:border-gray-400 transition-all"
                     >
                       <option value="">Select a support person</option>
                       {supportPersons.map(person => (
@@ -458,13 +458,13 @@ const CreateTicket = () => {
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-sm text-gray-500">If you have a preferred support person for this request</p>
+                    <p className="mt-2 text-sm text-gray-500">If you have a preferred support person for this request</p>
                   </div>
                 )}
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
                     Detailed Description *
                   </label>
                   <textarea
@@ -473,23 +473,23 @@ const CreateTicket = () => {
                     onChange={handleInputChange}
                     rows={6}
                     placeholder="Please provide a detailed description of your issue or request. Include any error messages, steps to reproduce, and what you've already tried..."
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.description ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all resize-none ${
+                      errors.description ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                     }`}
                   />
-                  {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
-                  <p className="mt-1 text-sm text-gray-500">Be as specific as possible to help us resolve your issue quickly</p>
+                  {errors.description && <p className="mt-2 text-sm text-red-600 font-medium">{errors.description}</p>}
+                  <p className="mt-2 text-sm text-gray-500">Be as specific as possible to help us resolve your issue quickly</p>
                 </div>
 
                 {/* Submit Buttons */}
-                <div className="flex gap-3 pt-6 border-t">
+                <div className="flex gap-4 pt-6 border-t border-gray-200">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    className="bg-gray-900 text-white px-8 py-3 rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium transition-colors"
                   >
                     {isSubmitting && (
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                       </svg>
@@ -501,7 +501,7 @@ const CreateTicket = () => {
                     type="button"
                     onClick={() => navigate('/dashboard')}
                     disabled={isSubmitting}
-                    className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                    className="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-200 disabled:opacity-50 font-medium transition-colors"
                   >
                     Cancel
                   </button>
