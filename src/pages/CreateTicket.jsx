@@ -1,0 +1,518 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, ArrowLeft, Ticket } from 'lucide-react';
+import { ticketsService } from '../services/tickets';
+
+const CreateTicket = () => {
+  const navigate = useNavigate();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [createdTicket, setCreatedTicket] = useState(null);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category_id: '',
+    subcategory_id: '',
+    subcategory_text: '',
+    software_name: '',
+    system_url: '',
+    type: '',
+    urgency: '',
+    mentioned_support_person: ''
+  });
+  
+  // Data state
+  const [categories, setCategories] = useState([]);
+  const [supportPersons, setSupportPersons] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  // Load categories on component mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoading(true);
+        const categoriesData = await ticketsService.getCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Load support persons when category changes
+  useEffect(() => {
+    const loadSupportPersons = async () => {
+      if (formData.category_id) {
+        try {
+          const supportData = await ticketsService.getSupportPersons(formData.category_id);
+          setSupportPersons(supportData);
+        } catch (error) {
+          console.error('Failed to load support persons:', error);
+          setSupportPersons([]);
+        }
+      } else {
+        setSupportPersons([]);
+      }
+    };
+    loadSupportPersons();
+  }, [formData.category_id]);
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+
+    // Reset related fields when category changes
+    if (name === 'category_id') {
+      setFormData(prev => ({
+        ...prev,
+        subcategory_id: '',
+        subcategory_text: '',
+        mentioned_support_person: ''
+      }));
+    }
+  };
+
+  // Get current category and subcategory
+  const getCurrentCategory = () => {
+    return categories.find(cat => cat.id === parseInt(formData.category_id));
+  };
+
+  const getCurrentSubcategory = () => {
+    const category = getCurrentCategory();
+    if (!category) return null;
+    return category.subcategories?.find(sub => sub.id === parseInt(formData.subcategory_id));
+  };
+
+  // Check if we should show software fields
+  const shouldShowSoftwareFields = () => {
+    const category = getCurrentCategory();
+    return category?.name === 'Software Systems';
+  };
+
+  // Check if we should show subcategory text input
+  const shouldShowSubcategoryText = () => {
+    const subcategory = getCurrentSubcategory();
+    return subcategory?.requires_text_input;
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    } else if (formData.title.trim().length < 5) {
+      newErrors.title = 'Title must be at least 5 characters';
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = 'Description must be at least 10 characters';
+    }
+
+    if (!formData.category_id) {
+      newErrors.category_id = 'Category is required';
+    }
+
+    if (!formData.type) {
+      newErrors.type = 'Request type is required';
+    }
+
+    if (!formData.urgency) {
+      newErrors.urgency = 'Urgency is required';
+    }
+
+    if (shouldShowSubcategoryText() && !formData.subcategory_text.trim()) {
+      newErrors.subcategory_text = 'Please specify the details';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Clean up the data
+      const submitData = {
+        ...formData,
+        category_id: parseInt(formData.category_id),
+        subcategory_id: formData.subcategory_id ? parseInt(formData.subcategory_id) : undefined,
+        mentioned_support_person: formData.mentioned_support_person ? parseInt(formData.mentioned_support_person) : undefined
+      };
+
+      // Remove empty fields
+      Object.keys(submitData).forEach(key => {
+        if (submitData[key] === '' || submitData[key] === undefined) {
+          delete submitData[key];
+        }
+      });
+
+      const result = await ticketsService.createTicket(submitData);
+      setCreatedTicket(result);
+      setShowSuccess(true);
+      
+    } catch (error) {
+      console.error('Failed to create ticket:', error);
+      alert(error.message || 'Failed to create ticket. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Success page
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Ticket Created Successfully!
+            </h1>
+            
+            <p className="text-gray-600 mb-6">
+              Your support ticket has been submitted and assigned ticket number{' '}
+              <span className="font-mono font-semibold text-blue-600">
+                {createdTicket?.ticket_number}
+              </span>
+            </p>
+            
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => navigate('/my-tickets')}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              >
+                View My Tickets
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setShowSuccess(false);
+                  setCreatedTicket(null);
+                  setFormData({
+                    title: '',
+                    description: '',
+                    category_id: '',
+                    subcategory_id: '',
+                    subcategory_text: '',
+                    software_name: '',
+                    system_url: '',
+                    type: '',
+                    urgency: '',
+                    mentioned_support_person: ''
+                  });
+                }}
+                className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200"
+              >
+                Create Another Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </button>
+          
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Ticket className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Create Support Ticket</h1>
+              <p className="text-gray-600">Submit a request for technical support or assistance</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          {loading ? (
+            <div className="bg-white rounded-lg shadow p-8">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading form...</span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ticket Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    placeholder="Brief description of your issue..."
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.title ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                </div>
+
+                {/* Category and Subcategory */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      name="category_id"
+                      value={formData.category_id}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.category_id ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    {errors.category_id && <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>}
+                  </div>
+
+                  {getCurrentCategory()?.subcategories?.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Subcategory
+                      </label>
+                      <select
+                        name="subcategory_id"
+                        value={formData.subcategory_id}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select a subcategory</option>
+                        {getCurrentCategory().subcategories.map(sub => (
+                          <option key={sub.id} value={sub.id}>{sub.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Subcategory Text */}
+                {shouldShowSubcategoryText() && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Please specify *
+                    </label>
+                    <input
+                      type="text"
+                      name="subcategory_text"
+                      value={formData.subcategory_text}
+                      onChange={handleInputChange}
+                      placeholder="Enter the specific details..."
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.subcategory_text ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.subcategory_text && <p className="mt-1 text-sm text-red-600">{errors.subcategory_text}</p>}
+                  </div>
+                )}
+
+                {/* Software Fields */}
+                {shouldShowSoftwareFields() && (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Software Name
+                      </label>
+                      <input
+                        type="text"
+                        name="software_name"
+                        value={formData.software_name}
+                        onChange={handleInputChange}
+                        placeholder="e.g., SAP, Oracle, Microsoft Teams..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        System URL
+                      </label>
+                      <input
+                        type="url"
+                        name="system_url"
+                        value={formData.system_url}
+                        onChange={handleInputChange}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="mt-1 text-sm text-gray-500">URL of the system you're having issues with</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Type and Urgency */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Request Type *
+                    </label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.type ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select request type</option>
+                      <option value="BreakFix">Break/Fix</option>
+                      <option value="Application Error">Application Error</option>
+                      <option value="Change Request">Change Request</option>
+                    </select>
+                    {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Urgency *
+                    </label>
+                    <select
+                      name="urgency"
+                      value={formData.urgency}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.urgency ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select urgency level</option>
+                      <option value="High">High - Urgent</option>
+                      <option value="Medium">Medium - Normal</option>
+                      <option value="Low">Low - When possible</option>
+                    </select>
+                    {errors.urgency && <p className="mt-1 text-sm text-red-600">{errors.urgency}</p>}
+                  </div>
+                </div>
+
+                {/* Support Person */}
+                {supportPersons.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Support Person (Optional)
+                    </label>
+                    <select
+                      name="mentioned_support_person"
+                      value={formData.mentioned_support_person}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select a support person</option>
+                      {supportPersons.map(person => (
+                        <option key={person.id} value={person.id}>
+                          {person.name} ({person.email})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-sm text-gray-500">If you have a preferred support person for this request</p>
+                  </div>
+                )}
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Detailed Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows={6}
+                    placeholder="Please provide a detailed description of your issue or request. Include any error messages, steps to reproduce, and what you've already tried..."
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.description ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+                  <p className="mt-1 text-sm text-gray-500">Be as specific as possible to help us resolve your issue quickly</p>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="flex gap-3 pt-6 border-t">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {isSubmitting && (
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                    )}
+                    {isSubmitting ? 'Creating Ticket...' : 'Create Ticket'}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard')}
+                    disabled={isSubmitting}
+                    className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CreateTicket;
