@@ -116,7 +116,7 @@ const LeftNavigation = () => {
                 <button
                   key={item.path}
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center transition-all duration-200 rounded-xl p-3 ${
+                  className={`w-full flex items-center transition-all duration-200 rounded-xl p-3 cursor-pointer ${
                     isActive(item.path)
                       ? 'bg-gray-900 text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -144,7 +144,7 @@ const LeftNavigation = () => {
                   isExpanded ? 'justify-start' : 'justify-center'
                 }`}
               >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                   <img 
                     src="cute-monkey-face.svg" 
                     alt="User Avatar" 
