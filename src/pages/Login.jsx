@@ -81,9 +81,18 @@ const Login = () => {
   Welcome back to ,
 </h1>
 <h2 className="text-4xl font-bold tracking-tight">
-  <span className="text-yellow-600">Bodyline</span>{" "}
-  <span className="text-gray-900">Pulse</span>
+  <span
+    className="bg-gradient-to-r from-[#E87A0B] via-[#F68009] via-[#FFA004] to-[#FFB601] bg-clip-text text-transparent"
+  >
+    Bodyline
+  </span>{" "}
+  <span
+    className="bg-gradient-to-r from-black via-gray-800 to-gray-700 bg-clip-text text-transparent"
+  >
+    Pulse
+  </span>
 </h2>
+
 
            
           <p className="text-gray-600 text-lg">
