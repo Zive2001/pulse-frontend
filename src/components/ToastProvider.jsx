@@ -18,8 +18,7 @@ const ToastProvider = ({ children }) => {
             fontSize: '14px',
             fontWeight: '500',
             padding: '12px 16px',
-            maxWidth: '90vw',
-            minWidth: '280px',
+            maxWidth: '320px',
             wordWrap: 'break-word',
             textAlign: 'left',
           },
@@ -43,9 +42,10 @@ const ToastProvider = ({ children }) => {
           },
         }}
         containerStyle={{
-          top: '80px', // Account for mobile navigation button
+          top: '80px',
           left: '16px',
           right: '16px',
+          margin: '0 auto',
         }}
         containerClassName="toast-container"
       />
@@ -54,39 +54,72 @@ const ToastProvider = ({ children }) => {
       <style jsx global>{`
         .toast-container {
           z-index: 9999;
+          position: fixed;
+          width: auto;
+          max-width: calc(100vw - 32px);
         }
         
         @media (max-width: 768px) {
           .toast-container {
             top: 70px !important;
-            left: 12px !important;
-            right: 12px !important;
+            left: 16px !important;
+            right: 16px !important;
+            max-width: calc(100vw - 32px) !important;
           }
           
           .toast-container > div {
-            max-width: calc(100vw - 24px) !important;
-            min-width: auto !important;
-            margin: 0 auto;
+            width: 100% !important;
+            max-width: calc(100vw - 32px) !important;
+            margin: 0 auto !important;
           }
           
           .toast-container [data-hot-toast] {
-            max-width: 100% !important;
+            max-width: calc(100vw - 32px) !important;
+            width: auto !important;
             font-size: 13px !important;
             padding: 10px 14px !important;
-            line-height: 1.4;
+            line-height: 1.4 !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            margin: 0 auto !important;
           }
         }
         
         @media (max-width: 480px) {
           .toast-container {
             top: 65px !important;
-            left: 8px !important;
-            right: 8px !important;
+            left: 12px !important;
+            right: 12px !important;
+            max-width: calc(100vw - 24px) !important;
+          }
+          
+          .toast-container > div {
+            max-width: calc(100vw - 24px) !important;
           }
           
           .toast-container [data-hot-toast] {
+            max-width: calc(100vw - 24px) !important;
             font-size: 12px !important;
             padding: 8px 12px !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .toast-container {
+            top: 60px !important;
+            left: 8px !important;
+            right: 8px !important;
+            max-width: calc(100vw - 16px) !important;
+          }
+          
+          .toast-container > div {
+            max-width: calc(100vw - 16px) !important;
+          }
+          
+          .toast-container [data-hot-toast] {
+            max-width: calc(100vw - 16px) !important;
+            font-size: 11px !important;
+            padding: 6px 10px !important;
           }
         }
       `}</style>

@@ -6,7 +6,6 @@ import {
   Ticket, 
   Plus, 
   LogOut,
-  User,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -145,8 +144,12 @@ const LeftNavigation = () => {
                   isExpanded ? 'justify-start' : 'justify-center'
                 }`}
               >
-                <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-gray-600" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <img 
+                    src="cute-monkey-face.svg" 
+                    alt="User Avatar" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 {isExpanded && (
                   <div className="ml-3 min-w-0 flex-1">
@@ -185,8 +188,12 @@ const LeftNavigation = () => {
             {/* Mobile Header */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <User className="w-5 h-5 text-gray-600" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="cute-monkey-face.svg" 
+                    alt="User Avatar" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="ml-3">
                   <div className="font-semibold text-gray-900">{user?.name}</div>
