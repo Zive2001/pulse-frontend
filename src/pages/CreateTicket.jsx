@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, ArrowLeft, Ticket } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Ticket, Send } from 'lucide-react';
 import { ticketsService } from '../services/tickets';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { showSuccessToast, showErrorToast, showLoadingToast, dismissToast } from '../utils/toastUtils';
 
 const CreateTicket = () => {
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdTicket, setCreatedTicket] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -38,6 +41,7 @@ const CreateTicket = () => {
         setCategories(categoriesData);
       } catch (error) {
         console.error('Failed to load categories:', error);
+        showErrorToast('Failed to load categories. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -55,6 +59,7 @@ const CreateTicket = () => {
         } catch (error) {
           console.error('Failed to load support persons:', error);
           setSupportPersons([]);
+          showErrorToast('Failed to load support persons for this category.');
         }
       } else {
         setSupportPersons([]);
@@ -149,16 +154,25 @@ const CreateTicket = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
+  // Handle form submission (show confirmation dialog)
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      showErrorToast('Please fix the errors in the form before submitting.');
       return;
     }
 
+    setShowConfirmDialog(true);
+  };
+
+  // Handle confirmed submission
+  const handleConfirmedSubmit = async () => {
+    let loadingToastId;
+    
     try {
       setIsSubmitting(true);
+      loadingToastId = showLoadingToast('Creating your support ticket...');
       
       // Clean up the data
       const submitData = {
@@ -176,15 +190,68 @@ const CreateTicket = () => {
       });
 
       const result = await ticketsService.createTicket(submitData);
+      
+      // Dismiss loading toast
+      dismissToast(loadingToastId);
+      
+      // Show success toast
+      showSuccessToast(
+        `Ticket created successfully! Ticket number: ${result.ticket_number}`,
+        { duration: 6000 }
+      );
+      
       setCreatedTicket(result);
       setShowSuccess(true);
+      setShowConfirmDialog(false);
       
     } catch (error) {
       console.error('Failed to create ticket:', error);
-      alert(error.message || 'Failed to create ticket. Please try again.');
+      
+      // Dismiss loading toast
+      if (loadingToastId) {
+        dismissToast(loadingToastId);
+      }
+      
+      // Show error toast
+      showErrorToast(
+        error.message || 'Failed to create ticket. Please try again.',
+        { duration: 6000 }
+      );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Generate confirmation message
+  const getConfirmationMessage = () => {
+    const category = getCurrentCategory();
+    const urgencyText = formData.urgency === 'High' ? 'urgent' : formData.urgency.toLowerCase();
+    
+    return `You are about to create a ${urgencyText} ${formData.type.toLowerCase()} ticket for "${category?.name}" category. 
+    
+The ticket will be submitted with the title: "${formData.title}"
+
+Are you sure you want to proceed?`;
+  };
+
+  // Reset form function
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      category_id: '',
+      subcategory_id: '',
+      subcategory_text: '',
+      software_name: '',
+      system_url: '',
+      type: '',
+      urgency: '',
+      mentioned_support_person: ''
+    });
+    setErrors({});
+    setShowSuccess(false);
+    setCreatedTicket(null);
+    showSuccessToast('Form reset successfully. You can create a new ticket.');
   };
 
   // Success page
@@ -217,22 +284,7 @@ const CreateTicket = () => {
               </button>
               
               <button 
-                onClick={() => {
-                  setShowSuccess(false);
-                  setCreatedTicket(null);
-                  setFormData({
-                    title: '',
-                    description: '',
-                    category_id: '',
-                    subcategory_id: '',
-                    subcategory_text: '',
-                    software_name: '',
-                    system_url: '',
-                    type: '',
-                    urgency: '',
-                    mentioned_support_person: ''
-                  });
-                }}
+                onClick={resetForm}
                 className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 Create Another Ticket
@@ -488,13 +540,8 @@ const CreateTicket = () => {
                     disabled={isSubmitting}
                     className="bg-gray-900 text-white px-8 py-3 rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium transition-colors"
                   >
-                    {isSubmitting && (
-                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                      </svg>
-                    )}
-                    {isSubmitting ? 'Creating Ticket...' : 'Create Ticket'}
+                    <Send className="w-4 h-4 mr-2" />
+                    Create Ticket
                   </button>
                   
                   <button
@@ -511,6 +558,20 @@ const CreateTicket = () => {
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmedSubmit}
+        title="Create Support Ticket"
+        message={getConfirmationMessage()}
+        confirmText="Create Ticket"
+        cancelText="Review Form"
+        confirmButtonClass="bg-gray-900 text-white hover:bg-gray-800"
+        isLoading={isSubmitting}
+        icon={<Send className="w-6 h-6 text-gray-900" />}
+      />
     </div>
   );
 };
