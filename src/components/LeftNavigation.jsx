@@ -76,11 +76,14 @@ const LeftNavigation = () => {
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button
           onClick={toggleMobileMenu}
-          className="w-12 h-12 bg-white rounded-xl shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
+          className="w-10 h-10 bg-white rounded-lg shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
         >
-          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
+
+      {/* Mobile Top Padding for Content */}
+      <div className="md:hidden h-16 w-full"></div>
 
       {/* Mobile Overlay */}
       {isMobileOpen && (
@@ -230,11 +233,6 @@ const LeftNavigation = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Desktop Content Padding */}
-      <div className={`hidden md:block transition-all duration-300 ${isExpanded ? 'ml-60' : 'ml-24'}`}>
-        {/* This creates space for the navigation */}
       </div>
     </>
   );

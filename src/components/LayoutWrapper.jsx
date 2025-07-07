@@ -5,7 +5,9 @@ const LayoutWrapper = ({ children, showNavigation = true }) => {
   return (
     <div className="relative">
       {showNavigation && <LeftNavigation />}
-      {children}
+      <div className="md:ml-24">
+        {children}
+      </div>
     </div>
   );
 };
