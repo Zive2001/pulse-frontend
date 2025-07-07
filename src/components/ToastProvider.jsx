@@ -6,7 +6,7 @@ const ToastProvider = ({ children }) => {
     <>
       {children}
       <Toaster
-        position="top-right"
+        position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
@@ -17,8 +17,11 @@ const ToastProvider = ({ children }) => {
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
             fontSize: '14px',
             fontWeight: '500',
-            padding: '16px',
-            maxWidth: '400px',
+            padding: '12px 16px',
+            maxWidth: '90vw',
+            minWidth: '280px',
+            wordWrap: 'break-word',
+            textAlign: 'left',
           },
           success: {
             iconTheme: {
@@ -39,7 +42,54 @@ const ToastProvider = ({ children }) => {
             },
           },
         }}
+        containerStyle={{
+          top: '80px', // Account for mobile navigation button
+          left: '16px',
+          right: '16px',
+        }}
+        containerClassName="toast-container"
       />
+      
+      {/* Custom CSS for mobile responsiveness */}
+      <style jsx global>{`
+        .toast-container {
+          z-index: 9999;
+        }
+        
+        @media (max-width: 768px) {
+          .toast-container {
+            top: 70px !important;
+            left: 12px !important;
+            right: 12px !important;
+          }
+          
+          .toast-container > div {
+            max-width: calc(100vw - 24px) !important;
+            min-width: auto !important;
+            margin: 0 auto;
+          }
+          
+          .toast-container [data-hot-toast] {
+            max-width: 100% !important;
+            font-size: 13px !important;
+            padding: 10px 14px !important;
+            line-height: 1.4;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .toast-container {
+            top: 65px !important;
+            left: 8px !important;
+            right: 8px !important;
+          }
+          
+          .toast-container [data-hot-toast] {
+            font-size: 12px !important;
+            padding: 8px 12px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

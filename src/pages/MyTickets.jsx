@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ticketsService } from '../services/tickets';
+import { showSuccessToast, showErrorToast, showLoadingToast, dismissToast } from '../utils/toastUtils';
 
 const MyTickets = () => {
   const navigate = useNavigate();
@@ -28,8 +29,12 @@ const MyTickets = () => {
   // Load tickets based on user role
   useEffect(() => {
     const loadTickets = async () => {
+      let loadingToastId;
+      
       try {
         setLoading(true);
+        loadingToastId = showLoadingToast('Loading tickets...');
+        
         let ticketsData;
         
         if (user?.role === 'manager' || user?.role === 'digital_team') {
@@ -41,15 +46,37 @@ const MyTickets = () => {
         }
         
         setTickets(ticketsData);
+        
+        // Dismiss loading toast and show success
+        dismissToast(loadingToastId);
+        
+        if (ticketsData.length > 0) {
+          showSuccessToast(
+            `Successfully loaded ${ticketsData.length} ticket${ticketsData.length !== 1 ? 's' : ''}`,
+            { duration: 3000 }
+          );
+        }
+        
       } catch (error) {
         console.error('Failed to load tickets:', error);
-        alert('Failed to load tickets. Please try again.');
+        
+        // Dismiss loading toast
+        if (loadingToastId) {
+          dismissToast(loadingToastId);
+        }
+        
+        showErrorToast(
+          'Failed to load tickets. Please refresh the page and try again.',
+          { duration: 5000 }
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    loadTickets();
+    if (user) {
+      loadTickets();
+    }
   }, [user?.role]);
 
   // Filter tickets based on search and filters
@@ -103,41 +130,132 @@ const MyTickets = () => {
     }
   };
 
+  // Get status update message
+  const getStatusUpdateMessage = (oldStatus, newStatus, ticketNumber) => {
+    const statusMessages = {
+      'Open': `Ticket ${ticketNumber} has been reopened and is now available for work`,
+      'In Progress': `Ticket ${ticketNumber} is now being actively worked on`,
+      'Resolved': `Ticket ${ticketNumber} has been marked as resolved`,
+      'Closed': `Ticket ${ticketNumber} has been closed and completed`
+    };
+    
+    return statusMessages[newStatus] || `Ticket ${ticketNumber} status updated to ${newStatus}`;
+  };
+
   // Handle ticket status update (for managers and digital team)
   const handleStatusUpdate = async (ticketId, newStatus) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    const oldStatus = ticket?.status;
+    let loadingToastId;
+    
     try {
+      loadingToastId = showLoadingToast(`Updating ticket status to ${newStatus}...`);
+      
       await ticketsService.updateTicketStatus(ticketId, newStatus);
       
-      // Refresh tickets
+      // Update local state
       setTickets(prev => prev.map(ticket => 
         ticket.id === ticketId 
           ? { ...ticket, status: newStatus }
           : ticket
       ));
       
-      alert('Ticket status updated successfully!');
+      // Dismiss loading toast
+      dismissToast(loadingToastId);
+      
+      // Show success message
+      const message = getStatusUpdateMessage(oldStatus, newStatus, ticket?.ticket_number);
+      showSuccessToast(message, { duration: 4000 });
+      
     } catch (error) {
       console.error('Failed to update ticket status:', error);
-      alert('Failed to update ticket status. Please try again.');
+      
+      // Dismiss loading toast
+      if (loadingToastId) {
+        dismissToast(loadingToastId);
+      }
+      
+      showErrorToast(
+        `Failed to update ticket ${ticket?.ticket_number} status. Please try again.`,
+        { duration: 5000 }
+      );
     }
   };
 
   // Handle ticket approval (for managers only)
   const handleApproveTicket = async (ticketId) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    let loadingToastId;
+    
     try {
+      loadingToastId = showLoadingToast(`Approving ticket ${ticket?.ticket_number}...`);
+      
       await ticketsService.approveTicket(ticketId);
       
-      // Refresh tickets
+      // Update local state
       setTickets(prev => prev.map(ticket => 
         ticket.id === ticketId 
           ? { ...ticket, status: 'Open' }
           : ticket
       ));
       
-      alert('Ticket approved successfully!');
+      // Dismiss loading toast
+      dismissToast(loadingToastId);
+      
+      // Show success message
+      showSuccessToast(
+        `Ticket ${ticket?.ticket_number} has been approved and is now open for work`,
+        { duration: 4000 }
+      );
+      
     } catch (error) {
       console.error('Failed to approve ticket:', error);
-      alert('Failed to approve ticket. Please try again.');
+      
+      // Dismiss loading toast
+      if (loadingToastId) {
+        dismissToast(loadingToastId);
+      }
+      
+      showErrorToast(
+        `Failed to approve ticket ${ticket?.ticket_number}. Please try again.`,
+        { duration: 5000 }
+      );
+    }
+  };
+
+  // Handle filter changes with user feedback
+  const handleFilterChange = (filterType, value) => {
+    switch (filterType) {
+      case 'status':
+        setStatusFilter(value);
+        if (value !== 'all') {
+          showSuccessToast(`Filtered by status: ${value}`, { duration: 2000 });
+        }
+        break;
+      case 'urgency':
+        setUrgencyFilter(value);
+        if (value !== 'all') {
+          showSuccessToast(`Filtered by urgency: ${value}`, { duration: 2000 });
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Handle search with debounced feedback
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    if (value.length >= 3) {
+      const matchingTickets = tickets.filter(ticket => 
+        ticket.title.toLowerCase().includes(value.toLowerCase()) ||
+        ticket.ticket_number.toLowerCase().includes(value.toLowerCase()) ||
+        ticket.description.toLowerCase().includes(value.toLowerCase())
+      );
+      
+      if (matchingTickets.length === 0) {
+        showErrorToast(`No tickets found matching "${value}"`, { duration: 3000 });
+      }
     }
   };
 
@@ -192,7 +310,7 @@ const MyTickets = () => {
             
             <button
               onClick={() => navigate('/create-ticket')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Ticket
@@ -212,8 +330,8 @@ const MyTickets = () => {
                 type="text"
                 placeholder="Search tickets..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
 
@@ -222,8 +340,8 @@ const MyTickets = () => {
               <Filter className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               >
                 <option value="all">All Status</option>
                 <option value="Open">Open</option>
@@ -238,8 +356,8 @@ const MyTickets = () => {
             <div>
               <select
                 value={urgencyFilter}
-                onChange={(e) => setUrgencyFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => handleFilterChange('urgency', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               >
                 <option value="all">All Urgency</option>
                 <option value="High">High</option>
@@ -248,6 +366,18 @@ const MyTickets = () => {
               </select>
             </div>
           </div>
+          
+          {/* Filter Results Summary */}
+          {(searchTerm || statusFilter !== 'all' || urgencyFilter !== 'all') && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Showing {filteredTickets.length} of {tickets.length} tickets
+                {searchTerm && ` matching "${searchTerm}"`}
+                {statusFilter !== 'all' && ` with status "${statusFilter}"`}
+                {urgencyFilter !== 'all' && ` with urgency "${urgencyFilter}"`}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Tickets List */}
@@ -263,9 +393,22 @@ const MyTickets = () => {
             {tickets.length === 0 && (
               <button
                 onClick={() => navigate('/create-ticket')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Create Your First Ticket
+              </button>
+            )}
+            {tickets.length > 0 && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setUrgencyFilter('all');
+                  showSuccessToast('Filters cleared successfully', { duration: 2000 });
+                }}
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Clear Filters
               </button>
             )}
           </div>
@@ -329,7 +472,7 @@ const MyTickets = () => {
                   <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
                     <button
                       onClick={() => navigate(`/tickets/${ticket.id}`)}
-                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200"
+                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200 transition-colors"
                     >
                       View Details
                     </button>
@@ -341,7 +484,7 @@ const MyTickets = () => {
                           <select
                             value={ticket.status}
                             onChange={(e) => handleStatusUpdate(ticket.id, e.target.value)}
-                            className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm border-0 focus:ring-2 focus:ring-blue-500"
+                            className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm border-0 focus:ring-2 focus:ring-blue-500 transition-all"
                           >
                             <option value="Open">Open</option>
                             <option value="In Progress">In Progress</option>
@@ -354,7 +497,7 @@ const MyTickets = () => {
                         {user?.role === 'manager' && ticket.status === 'Pending Approval' && (
                           <button
                             onClick={() => handleApproveTicket(ticket.id)}
-                            className="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200"
+                            className="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200 transition-colors"
                           >
                             Approve
                           </button>
