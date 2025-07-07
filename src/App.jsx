@@ -1,8 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoadingProvider, useLoading } from './context/LoadingProvider';
 import ToastProvider from './components/ToastProvider';
 import LayoutWrapper from './components/LayoutWrapper';
+import AppLoader from './components/AppLoader';
 
 // Import Pages
 import Login from './pages/Login';
@@ -128,18 +130,34 @@ const AppRoutes = () => {
   );
 };
 
+// App Content Component
+const AppContent = () => {
+  const { isInitialLoading } = useLoading();
+
+  return (
+    <>
+      <AppLoader isVisible={isInitialLoading} />
+      {!isInitialLoading && (
+        <div className="App">
+          <AppRoutes />
+        </div>
+      )}
+    </>
+  );
+};
+
 // Main App Component
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <ToastProvider>
-          <div className="App">
-            <AppRoutes />
-          </div>
-        </ToastProvider>
-      </AuthProvider>
-    </Router>
+    <LoadingProvider>
+      <Router>
+        <AuthProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </AuthProvider>
+      </Router>
+    </LoadingProvider>
   );
 }
 
