@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ToastProvider from './components/ToastProvider';
+import LayoutWrapper from './components/LayoutWrapper';
 
 // Import Pages
 import Login from './pages/Login';
@@ -24,7 +25,13 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return isAuthenticated() ? children : <Navigate to="/login" replace />;
+  return isAuthenticated() ? (
+    <LayoutWrapper>
+      {children}
+    </LayoutWrapper>
+  ) : (
+    <Navigate to="/login" replace />
+  );
 };
 
 // Public Route Component (redirects to dashboard if already authenticated)
