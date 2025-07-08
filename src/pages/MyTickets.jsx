@@ -87,6 +87,27 @@ const MyTickets = () => {
     return matchesSearch && matchesStatus && matchesUrgency;
   });
 
+  // Check if user can update ticket status
+  const canUpdateTicketStatus = (ticket) => {
+    // Only managers can update any ticket
+    if (user?.role === 'manager') {
+      return true;
+    }
+    
+    // Digital team members can update tickets, but NOT their own tickets that are pending approval
+    if (user?.role === 'digital_team') {
+      // If this is their own ticket and it's pending approval, they cannot update it
+      if (ticket.created_by_email === user?.email && ticket.status === 'Pending Approval') {
+        return false;
+      }
+      // They can update other tickets or their own tickets that have been approved
+      return true;
+    }
+    
+    // Regular users cannot update ticket status
+    return false;
+  };
+
   // Get status badge styling
   const getStatusBadge = (status) => {
     const badges = {
@@ -142,6 +163,16 @@ const MyTickets = () => {
   // Handle ticket status update (for managers and digital team)
   const handleStatusUpdate = async (ticketId, newStatus) => {
     const ticket = tickets.find(t => t.id === ticketId);
+    
+    // Additional check to prevent digital team from updating their own pending tickets
+    if (!canUpdateTicketStatus(ticket)) {
+      showErrorToast(
+        'You cannot update the status of your own ticket while it is pending approval.',
+        { duration: 5000 }
+      );
+      return;
+    }
+    
     const oldStatus = ticket?.status;
     let loadingToastId;
     
@@ -480,7 +511,7 @@ const MyTickets = () => {
                     </button>
                     
                     {/* Manager/Digital Team Actions */}
-                    {(user?.role === 'manager' || user?.role === 'digital_team') && (
+                    {canUpdateTicketStatus(ticket) && (
                       <>
                         {ticket.status !== 'Resolved' && ticket.status !== 'Closed' && (
                           <select
@@ -494,17 +525,27 @@ const MyTickets = () => {
                             <option value="Closed">Closed</option>
                           </select>
                         )}
-                        
-                        {/* Manager Approval */}
-                        {user?.role === 'manager' && ticket.status === 'Pending Approval' && (
-                          <button
-                            onClick={() => handleApproveTicket(ticket.id)}
-                            className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors font-medium"
-                          >
-                            Approve
-                          </button>
-                        )}
                       </>
+                    )}
+                    
+                    {/* Manager Approval */}
+                    {user?.role === 'manager' && ticket.status === 'Pending Approval' && (
+                      <button
+                        onClick={() => handleApproveTicket(ticket.id)}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors font-medium"
+                      >
+                        Approve
+                      </button>
+                    )}
+                    
+                    {/* Show warning message for digital team members viewing their own pending tickets */}
+                    {user?.role === 'digital_team' && 
+                     ticket.created_by_email === user?.email && 
+                     ticket.status === 'Pending Approval' && (
+                      <div className="text-orange-600 text-sm bg-orange-50 px-3 py-1 rounded-lg border border-orange-200">
+                        <AlertCircle className="w-4 h-4 inline mr-1" />
+                        Awaiting manager approval
+                      </div>
                     )}
                   </div>
                 </div>
