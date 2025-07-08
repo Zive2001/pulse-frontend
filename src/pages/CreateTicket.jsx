@@ -301,21 +301,21 @@ Are you sure you want to proceed?`;
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <button
+          {/* <button
             onClick={() => navigate('/dashboard')}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
-          </button>
+          </button> */}
           
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-gray-100 rounded-xl">
               <Ticket className="w-6 h-6 text-gray-900" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Create Support Ticket</h1>
-              <p className="text-gray-600 mt-1">Submit a request for technical support or assistance</p>
+              <h1 className="text-2xl font-bold text-gray-900">Create Support Ticket</h1>
+              <p className="text-gray-600 mt-1 text-sm font-medium">Submit a request for technical support or assistance</p>
             </div>
           </div>
         </div>
