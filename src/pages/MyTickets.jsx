@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Ticket, 
@@ -27,15 +27,28 @@ const MyTickets = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [urgencyFilter, setUrgencyFilter] = useState('all');
+  
+  // Use ref to track loading state and prevent duplicate calls
+  const loadingRef = useRef(false);
+  const loadingToastIdRef = useRef(null);
 
   // Load tickets based on user role
   useEffect(() => {
     const loadTickets = async () => {
-      let loadingToastId;
+      // Prevent multiple simultaneous calls
+      if (loadingRef.current || !user) {
+        return;
+      }
+      
+      loadingRef.current = true;
       
       try {
         setLoading(true);
-        loadingToastId = showLoadingToast('Loading tickets...');
+        
+        // Only show loading toast if we don't already have one
+        if (!loadingToastIdRef.current) {
+          loadingToastIdRef.current = showLoadingToast('Loading tickets...');
+        }
         
         let ticketsData;
         
@@ -49,15 +62,19 @@ const MyTickets = () => {
         
         setTickets(ticketsData);
         
-        // Just dismiss loading toast, no success message
-        dismissToast(loadingToastId);
+        // Dismiss loading toast if it exists
+        if (loadingToastIdRef.current) {
+          dismissToast(loadingToastIdRef.current);
+          loadingToastIdRef.current = null;
+        }
         
       } catch (error) {
         console.error('Failed to load tickets:', error);
         
-        // Dismiss loading toast
-        if (loadingToastId) {
-          dismissToast(loadingToastId);
+        // Dismiss loading toast if it exists
+        if (loadingToastIdRef.current) {
+          dismissToast(loadingToastIdRef.current);
+          loadingToastIdRef.current = null;
         }
         
         showErrorToast(
@@ -66,13 +83,21 @@ const MyTickets = () => {
         );
       } finally {
         setLoading(false);
+        loadingRef.current = false;
       }
     };
 
-    if (user) {
-      loadTickets();
-    }
-  }, [user?.role]);
+    loadTickets();
+    
+    // Cleanup function to dismiss toast if component unmounts
+    return () => {
+      if (loadingToastIdRef.current) {
+        dismissToast(loadingToastIdRef.current);
+        loadingToastIdRef.current = null;
+      }
+      loadingRef.current = false;
+    };
+  }, [user?.id]); // Changed dependency to user?.id instead of user?.role
 
   // Filter tickets based on search and filters
   const filteredTickets = tickets.filter(ticket => {

@@ -13,7 +13,10 @@ import {
   XCircle,
   User,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  Settings,
+  Bell,
+  Search
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -79,6 +82,18 @@ const Dashboard = () => {
       .slice(0, 5);
   };
 
+  // Get time-based greeting
+  const getGreeting = () => {
+    const currentHour = new Date().getHours();
+    if (currentHour < 12) {
+      return { text: 'Good morning', icon: '🌅', color: 'text-orange-500' };
+    } else if (currentHour < 17) {
+      return { text: 'Good afternoon', icon: '☀️', color: 'text-yellow-500' };
+    } else {
+      return { text: 'Good evening', icon: '🌙', color: 'text-blue-500' };
+    }
+  };
+
   // Get role-specific stats cards
   const getStatsCards = () => {
     const baseCards = [
@@ -86,8 +101,7 @@ const Dashboard = () => {
         name: 'Total Tickets',
         value: stats.total,
         icon: Ticket,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100'
+        color: 'text-blue-600'
       }
     ];
 
@@ -98,22 +112,19 @@ const Dashboard = () => {
           name: 'Pending Approval',
           value: stats.pendingApproval,
           icon: Clock,
-          color: 'text-orange-600',
-          bgColor: 'bg-orange-100'
+          color: 'text-orange-600'
         },
         {
           name: 'High Priority',
           value: stats.urgent,
           icon: AlertTriangle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-100'
+          color: 'text-red-600'
         },
         {
           name: 'Resolved Today',
           value: stats.resolved,
           icon: CheckCircle,
-          color: 'text-green-600',
-          bgColor: 'bg-green-100'
+          color: 'text-green-600'
         }
       ];
     } else if (user?.role === 'digital_team') {
@@ -123,22 +134,19 @@ const Dashboard = () => {
           name: 'Open Tickets',
           value: stats.open,
           icon: Clock,
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-100'
+          color: 'text-yellow-600'
         },
         {
           name: 'In Progress',
           value: stats.inProgress,
           icon: TrendingUp,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-100'
+          color: 'text-blue-600'
         },
         {
           name: 'Urgent',
           value: stats.urgent,
           icon: AlertTriangle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-100'
+          color: 'text-red-600'
         }
       ];
     } else {
@@ -148,22 +156,19 @@ const Dashboard = () => {
           name: 'Open',
           value: stats.open,
           icon: Clock,
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-100'
+          color: 'text-yellow-600'
         },
         {
           name: 'In Progress',
           value: stats.inProgress,
           icon: TrendingUp,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-100'
+          color: 'text-blue-600'
         },
         {
           name: 'Resolved',
           value: stats.resolved,
           icon: CheckCircle,
-          color: 'text-green-600',
-          bgColor: 'bg-green-100'
+          color: 'text-green-600'
         }
       ];
     }
@@ -194,13 +199,13 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
+        <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           </div>
         </div>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           <span className="ml-2 text-gray-600">Loading dashboard...</span>
         </div>
       </div>
@@ -209,54 +214,87 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      {/* Modern Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {user?.role === 'manager' ? 'Manager Dashboard' :
-                 user?.role === 'digital_team' ? 'Support Team Dashboard' :
-                 'My Dashboard'}
-              </h1>
-              <p className="text-gray-600">Welcome back, {user?.name}!</p>
-            </div>
+          <div className="flex items-center justify-between h-16">
+            {/* Left section */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500 capitalize">
-                Role: {user?.role?.replace('_', ' ')}
-              </span>
-              <button
-                onClick={logout}
-                className="text-sm text-red-600 hover:text-red-800 transition-colors"
-              >
-                Logout
-              </button>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">
+                    {user?.role === 'manager' ? 'Manager Dashboard' :
+                     user?.role === 'digital_team' ? 'Support Dashboard' :
+                     'Dashboard'}
+                  </h1>
+                </div>
+              </div>
+            </div>
+
+            {/* Right section */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-3">
+                <div className="text-sm text-gray-500">
+                  <span className="font-medium text-gray-900">{user?.name}</span>
+                  <span className="block text-xs capitalize">{user?.role?.replace('_', ' ')}</span>
+                </div>
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-gray-600" />
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Bell className="w-5 h-5" />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Settings className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={logout}
+                  className="ml-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Dynamic Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Welcome Message */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-2">
+            <span className="text-2xl">{getGreeting().icon}</span>
+            <h2 className="text-lg font-medium text-gray-900">
+              {getGreeting().text}, {user?.role?.replace('_', ' ')} {user?.name}!
+            </h2>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">Here's what's happening with your tickets today.</p>
+        </div>
+
+        {/* Compact Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {getStatsCards().map((stat, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center">
-                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{stat.name}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
+                <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Plus className="w-5 h-5 mr-2" />
               Quick Actions
@@ -264,7 +302,7 @@ const Dashboard = () => {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/create-ticket')}
-                className="w-full text-left px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                className="w-full text-left px-4 py-3 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors flex items-center"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Ticket
@@ -301,7 +339,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Clock className="w-5 h-5 mr-2" />
               Recent Tickets
@@ -335,7 +373,7 @@ const Dashboard = () => {
                   <p className="text-gray-500 text-sm">No tickets yet</p>
                   <button
                     onClick={() => navigate('/create-ticket')}
-                    className="text-blue-600 text-sm hover:text-blue-700 mt-1"
+                    className="text-gray-900 text-sm hover:text-gray-700 mt-1"
                   >
                     Create your first ticket
                   </button>
@@ -345,7 +383,7 @@ const Dashboard = () => {
           </div>
 
           {/* Role-specific Panel */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Users className="w-5 h-5 mr-2" />
               {user?.role === 'manager' ? 'Management Overview' :
@@ -403,16 +441,16 @@ const Dashboard = () => {
         </div>
 
         {/* Role-specific Information */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
           <div className="flex items-start">
-            <Users className="w-6 h-6 text-blue-600 mt-1" />
+            <Users className="w-6 h-6 text-gray-600 mt-1" />
             <div className="ml-3">
-              <h4 className="text-sm font-medium text-blue-900">
+              <h4 className="text-sm font-medium text-gray-900">
                 {user?.role === 'manager' ? 'Manager Capabilities' :
                  user?.role === 'digital_team' ? 'Support Team Features' :
                  'Available Features'}
               </h4>
-              <div className="mt-2 text-sm text-blue-800">
+              <div className="mt-2 text-sm text-gray-700">
                 {user?.role === 'manager' ? (
                   <ul className="list-disc list-inside space-y-1">
                     <li>Approve pending tickets from team members</li>
