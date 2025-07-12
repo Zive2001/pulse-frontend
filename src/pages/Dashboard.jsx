@@ -288,17 +288,76 @@ const notificationTickets = getNotificationTickets();
                 </div>
               </div>
 
-              <button
-                onClick={handleBellClick}
-                className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Bell className="w-5 h-5" />
-                {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
+     <div className="relative notification-dropdown">
+  <button
+    onClick={handleBellClick}
+    className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+    aria-expanded={showNotifications}
+  >
+    <Bell className="w-5 h-5" />
+    {notificationCount > 0 && (
+      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+        {notificationCount}
+      </span>
+    )}
+  </button>
+
+  {/* Notification Panel */}
+  {showNotifications && (
+    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 border border-gray-200 max-h-96 overflow-auto">
+      <div className="p-4 border-b border-gray-200">
+        <h3 className="font-semibold text-sm text-gray-700">
+          {user?.role === 'manager' ? 'Pending Approvals' :
+           user?.role === 'digital_team' ? 'Urgent Tickets' : 'Tasks Needing Attention'}
+        </h3>
+      </div>
+
+      {notificationTickets.length === 0 ? (
+        <div className="p-4 text-center text-gray-500 text-sm">
+          No pending tasks
+        </div>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {notificationTickets.map((ticket) => (
+            <li
+              key={ticket.id}
+              onClick={() => {
+                setShowNotifications(false);
+                navigate(`/tickets/${ticket.id}`);
+              }}
+              className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">{ticket.title}</p>
+                  <p className="text-xs text-gray-500">{ticket.ticket_number}</p>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(ticket.status)}`}>
+                  {ticket.status}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Created: {formatDate(ticket.created_at)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="p-2 border-t border-gray-200 text-right">
+        <button
+          onClick={() => {
+            setShowNotifications(false);
+            navigate('/my-tickets');
+          }}
+          className="text-xs text-blue-600 hover:text-blue-800"
+        >
+          View all
+        </button>
+      </div>
+    </div>
+  )}
+</div>
 
               <button
                 onClick={logout}
