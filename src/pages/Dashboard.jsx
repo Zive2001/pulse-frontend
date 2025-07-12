@@ -33,7 +33,7 @@ const Dashboard = () => {
     pendingApproval: 0,
     resolvedToday: 0,
   });
-  const [notificationCount, setNotificationCount] = useState(0);
+ const [showNotifications, setShowNotifications] = useState(false);
 
   // Load dashboard data
   useEffect(() => {
@@ -117,16 +117,9 @@ const Dashboard = () => {
   };
 
   // Redirect based on role when clicking bell
-  const handleBellClick = () => {
-    if (user?.role === 'manager') {
-      navigate('/my-tickets');
-    } else if (user?.role === 'digital_team') {
-      navigate('/my-tickets');
-    } else {
-      navigate('/my-tickets');
-    }
-  };
-
+ const handleBellClick = () => {
+  setShowNotifications(!showNotifications);
+};
   // Get role-specific stats cards
   const getStatsCards = () => {
     const baseCards = [
@@ -137,6 +130,30 @@ const Dashboard = () => {
         color: 'text-blue-600',
       },
     ];
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (showNotifications && !event.target.closest('.notification-dropdown')) {
+      setShowNotifications(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, [showNotifications]);
+
+
+const getNotificationTickets = () => {
+  if (user?.role === 'manager') {
+    return tickets.filter(t => t.status === 'Pending Approval');
+  } else if (user?.role === 'digital_team') {
+    return tickets.filter(t => t.urgency === 'High');
+  } else {
+    return tickets.filter(t => ['Open', 'In Progress'].includes(t.status));
+  }
+};
+
+const notificationTickets = getNotificationTickets();
+
 
     if (user?.role === 'manager') {
       return [
