@@ -22,6 +22,7 @@ import {
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -33,7 +34,9 @@ const Dashboard = () => {
     pendingApproval: 0,
     resolvedToday: 0,
   });
- const [showNotifications, setShowNotifications] = useState(false);
+
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Load dashboard data
   useEffect(() => {
@@ -54,6 +57,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     if (user) {
       loadDashboardData();
     }
@@ -116,112 +120,34 @@ const Dashboard = () => {
     }
   };
 
-  // Redirect based on role when clicking bell
- const handleBellClick = () => {
-  setShowNotifications(!showNotifications);
-};
-  // Get role-specific stats cards
-  const getStatsCards = () => {
-    const baseCards = [
-      {
-        name: 'Total Tickets',
-        value: stats.total,
-        icon: Ticket,
-        color: 'text-blue-600',
-      },
-    ];
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (showNotifications && !event.target.closest('.notification-dropdown')) {
-      setShowNotifications(false);
+  // Get filtered notifications based on role
+  const getNotificationTickets = () => {
+    if (user?.role === 'manager') {
+      return tickets.filter(t => t.status === 'Pending Approval');
+    } else if (user?.role === 'digital_team') {
+      return tickets.filter(t => t.urgency === 'High');
+    } else {
+      return tickets.filter(t => ['Open', 'In Progress'].includes(t.status));
     }
   };
 
-  document.addEventListener('mousedown', handleClickOutside);
-  return () => document.removeEventListener('mousedown', handleClickOutside);
-}, [showNotifications]);
+  const notificationTickets = getNotificationTickets();
 
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications && !event.target.closest('.notification-dropdown')) {
+        setShowNotifications(false);
+      }
+    };
 
-const getNotificationTickets = () => {
-  if (user?.role === 'manager') {
-    return tickets.filter(t => t.status === 'Pending Approval');
-  } else if (user?.role === 'digital_team') {
-    return tickets.filter(t => t.urgency === 'High');
-  } else {
-    return tickets.filter(t => ['Open', 'In Progress'].includes(t.status));
-  }
-};
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
 
-const notificationTickets = getNotificationTickets();
-
-
-    if (user?.role === 'manager') {
-      return [
-        ...baseCards,
-        {
-          name: 'Pending Approval',
-          value: stats.pendingApproval,
-          icon: Clock,
-          color: 'text-orange-600',
-        },
-        {
-          name: 'High Priority',
-          value: stats.urgent,
-          icon: AlertTriangle,
-          color: 'text-red-600',
-        },
-        {
-          name: 'Resolved Today',
-          value: stats.resolvedToday,
-          icon: CheckCircle,
-          color: 'text-green-600',
-        },
-      ];
-    } else if (user?.role === 'digital_team') {
-      return [
-        ...baseCards,
-        {
-          name: 'Open Tickets',
-          value: stats.open,
-          icon: Clock,
-          color: 'text-yellow-600',
-        },
-        {
-          name: 'In Progress',
-          value: stats.inProgress,
-          icon: TrendingUp,
-          color: 'text-blue-600',
-        },
-        {
-          name: 'Urgent',
-          value: stats.urgent,
-          icon: AlertTriangle,
-          color: 'text-red-600',
-        },
-      ];
-    } else {
-      return [
-        ...baseCards,
-        {
-          name: 'Open',
-          value: stats.open,
-          icon: Clock,
-          color: 'text-yellow-600',
-        },
-        {
-          name: 'In Progress',
-          value: stats.inProgress,
-          icon: TrendingUp,
-          color: 'text-blue-600',
-        },
-        {
-          name: 'Resolved',
-          value: stats.resolved,
-          icon: CheckCircle,
-          color: 'text-green-600',
-        },
-      ];
-    }
+  // Toggle notification panel
+  const handleBellClick = () => {
+    setShowNotifications(!showNotifications);
   };
 
   // Get status badge styling
@@ -231,7 +157,7 @@ const notificationTickets = getNotificationTickets();
       'In Progress': 'bg-yellow-100 text-yellow-800',
       'Pending Approval': 'bg-orange-100 text-orange-800',
       'Resolved': 'bg-green-100 text-green-800',
-      'Closed': 'bg-gray-100 text-gray-800',
+      'Closed': 'bg-gray-100 text-gray-800'
     };
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
@@ -242,8 +168,88 @@ const notificationTickets = getNotificationTickets();
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
+      minute: '2-digit'
     });
+  };
+
+  // Get role-specific stats cards
+  const getStatsCards = () => {
+    const baseCards = [
+      {
+        name: 'Total Tickets',
+        value: stats.total,
+        icon: Ticket,
+        color: 'text-blue-600'
+      }
+    ];
+
+    if (user?.role === 'manager') {
+      return [
+        ...baseCards,
+        {
+          name: 'Pending Approval',
+          value: stats.pendingApproval,
+          icon: Clock,
+          color: 'text-orange-600'
+        },
+        {
+          name: 'High Priority',
+          value: stats.urgent,
+          icon: AlertTriangle,
+          color: 'text-red-600'
+        },
+        {
+          name: 'Resolved Today',
+          value: stats.resolvedToday,
+          icon: CheckCircle,
+          color: 'text-green-600'
+        }
+      ];
+    } else if (user?.role === 'digital_team') {
+      return [
+        ...baseCards,
+        {
+          name: 'Open Tickets',
+          value: stats.open,
+          icon: Clock,
+          color: 'text-yellow-600'
+        },
+        {
+          name: 'In Progress',
+          value: stats.inProgress,
+          icon: TrendingUp,
+          color: 'text-blue-600'
+        },
+        {
+          name: 'Urgent',
+          value: stats.urgent,
+          icon: AlertTriangle,
+          color: 'text-red-600'
+        }
+      ];
+    } else {
+      return [
+        ...baseCards,
+        {
+          name: 'Open',
+          value: stats.open,
+          icon: Clock,
+          color: 'text-yellow-600'
+        },
+        {
+          name: 'In Progress',
+          value: stats.inProgress,
+          icon: TrendingUp,
+          color: 'text-blue-600'
+        },
+        {
+          name: 'Resolved',
+          value: stats.resolved,
+          icon: CheckCircle,
+          color: 'text-green-600'
+        }
+      ];
+    }
   };
 
   if (loading) {
@@ -288,76 +294,76 @@ const notificationTickets = getNotificationTickets();
                 </div>
               </div>
 
-     <div className="relative notification-dropdown">
-  <button
-    onClick={handleBellClick}
-    className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
-    aria-expanded={showNotifications}
-  >
-    <Bell className="w-5 h-5" />
-    {notificationCount > 0 && (
-      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-        {notificationCount}
-      </span>
-    )}
-  </button>
+              <div className="relative notification-dropdown">
+                <button
+                  onClick={handleBellClick}
+                  className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+                  aria-expanded={showNotifications}
+                >
+                  <Bell className="w-5 h-5" />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
 
-  {/* Notification Panel */}
-  {showNotifications && (
-    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 border border-gray-200 max-h-96 overflow-auto">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-sm text-gray-700">
-          {user?.role === 'manager' ? 'Pending Approvals' :
-           user?.role === 'digital_team' ? 'Urgent Tickets' : 'Tasks Needing Attention'}
-        </h3>
-      </div>
+                {/* Notification Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 border border-gray-200 max-h-96 overflow-auto">
+                    <div className="p-4 border-b border-gray-200">
+                      <h3 className="font-semibold text-sm text-gray-700">
+                        {user?.role === 'manager' ? 'Pending Approvals' :
+                         user?.role === 'digital_team' ? 'Urgent Tickets' : 'Tasks Needing Attention'}
+                      </h3>
+                    </div>
 
-      {notificationTickets.length === 0 ? (
-        <div className="p-4 text-center text-gray-500 text-sm">
-          No pending tasks
-        </div>
-      ) : (
-        <ul className="divide-y divide-gray-100">
-          {notificationTickets.map((ticket) => (
-            <li
-              key={ticket.id}
-              onClick={() => {
-                setShowNotifications(false);
-                navigate(`/tickets/${ticket.id}`);
-              }}
-              className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
-            >
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">{ticket.title}</p>
-                  <p className="text-xs text-gray-500">{ticket.ticket_number}</p>
-                </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(ticket.status)}`}>
-                  {ticket.status}
-                </span>
+                    {notificationTickets.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No pending tasks
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-gray-100">
+                        {notificationTickets.map((ticket) => (
+                          <li
+                            key={ticket.id}
+                            onClick={() => {
+                              setShowNotifications(false);
+                              navigate(`/tickets/${ticket.id}`);
+                            }}
+                            className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-900 truncate">{ticket.title}</p>
+                                <p className="text-xs text-gray-500">{ticket.ticket_number}</p>
+                              </div>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(ticket.status)}`}>
+                                {ticket.status}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">
+                              Created: {formatDate(ticket.created_at)}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="p-2 border-t border-gray-200 text-right">
+                      <button
+                        onClick={() => {
+                          setShowNotifications(false);
+                          navigate('/my-tickets');
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        View all
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Created: {formatDate(ticket.created_at)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="p-2 border-t border-gray-200 text-right">
-        <button
-          onClick={() => {
-            setShowNotifications(false);
-            navigate('/my-tickets');
-          }}
-          className="text-xs text-blue-600 hover:text-blue-800"
-        >
-          View all
-        </button>
-      </div>
-    </div>
-  )}
-</div>
 
               <button
                 onClick={logout}
@@ -508,8 +514,8 @@ const notificationTickets = getNotificationTickets();
                   <span className="font-semibold text-red-600">{stats.urgent}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Resolved this week</span>
-                  <span className="font-semibold text-green-600">{stats.resolved}</span>
+                  <span className="text-sm text-gray-600">Resolved today</span>
+                  <span className="font-semibold text-green-600">{stats.resolvedToday}</span>
                 </div>
               </div>
             ) : user?.role === 'digital_team' ? (
