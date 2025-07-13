@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -11,6 +12,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateTicket from './pages/CreateTicket';
 import MyTickets from './pages/MyTickets';
+import Admin from './pages/Admin'; // 🔥 New import
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -28,15 +30,13 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return isAuthenticated() ? (
-    <LayoutWrapper>
-      {children}
-    </LayoutWrapper>
+    <LayoutWrapper>{children}</LayoutWrapper>
   ) : (
     <Navigate to="/login" replace />
   );
 };
 
-// Public Route Component (redirects to dashboard if already authenticated)
+// Public Route Component
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -54,7 +54,7 @@ const PublicRoute = ({ children }) => {
   return isAuthenticated() ? <Navigate to="/dashboard" replace /> : children;
 };
 
-// App Routes Component
+// Main App Routes
 const AppRoutes = () => {
   return (
     <Routes>
@@ -77,7 +77,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      
+
       <Route
         path="/create-ticket"
         element={
@@ -92,6 +92,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MyTickets />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <Admin />
           </ProtectedRoute>
         }
       />
@@ -123,14 +132,14 @@ const AppRoutes = () => {
 
       {/* Redirect root to dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      
+
       {/* Catch all - redirect to dashboard */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 };
 
-// App Content Component
+// App Content Wrapper
 const AppContent = () => {
   const { isInitialLoading } = useLoading();
 

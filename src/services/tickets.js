@@ -1,3 +1,4 @@
+// src/services/tickets.js
 import api from './api';
 
 export const ticketsService = {

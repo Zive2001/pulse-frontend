@@ -69,7 +69,8 @@ const Login = () => {
   const exampleAccounts = [
     { email: 'manager@masholdings.com', role: 'Manager', color: 'bg-purple-100 text-purple-700' },
     { email: 'digital.team@masholdings.com', role: 'Digital Team', color: 'bg-blue-100 text-blue-700' },
-    { email: 'user@masholdings.com', role: 'General User', color: 'bg-green-100 text-green-700' }
+    { email: 'user@masholdings.com', role: 'General User', color: 'bg-green-100 text-green-700' },
+    { email: 'supunse@masholdings.com', role: 'Admin', color: 'bg-green-100 text-green-700' }
   ];
 
   return (
