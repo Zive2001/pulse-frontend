@@ -12,7 +12,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateTicket from './pages/CreateTicket';
 import MyTickets from './pages/MyTickets';
-import Admin from './pages/Admin'; // 🔥 New import
+import TicketDetail from './pages/TicketDetail'; // 🔥 New import for individual ticket view
+import Admin from './pages/Admin';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -105,19 +106,17 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Future Routes */}
+      {/* Individual Ticket Details Route */}
       <Route
         path="/tickets/:id"
         element={
           <ProtectedRoute>
-            <div className="p-8 text-center">
-              <h2 className="text-2xl font-bold">Ticket Details</h2>
-              <p className="text-gray-600 mt-2">Individual ticket view coming soon...</p>
-            </div>
+            <TicketDetail />
           </ProtectedRoute>
         }
       />
 
+      {/* Future Routes */}
       <Route
         path="/reports"
         element={

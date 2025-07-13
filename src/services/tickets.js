@@ -77,6 +77,21 @@ export const ticketsService = {
     }
   },
 
+  // Add remark to ticket
+  async addTicketRemark(ticketId, remark, status = null) {
+    try {
+      const payload = { remark };
+      if (status) {
+        payload.status = status;
+      }
+      
+      const response = await api.put(`/api/tickets/${ticketId}/remark`, payload);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.message || 'Failed to add remark');
+    }
+  },
+
   // Approve ticket (manager only)
   async approveTicket(ticketId) {
     try {
