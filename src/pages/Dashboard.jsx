@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ticketsService } from '../services/tickets';
+import LottieIcon from '../components/LottieIcon'; // Import your Lottie component
 import {
   Plus,
   Ticket,
@@ -18,6 +19,11 @@ import {
   Bell,
   Search,
 } from 'lucide-react';
+
+// Import your Lottie animation files
+import morningAnimation from '../assets/animations/morning.json';
+import afternoonAnimation from '../assets/animations/afternoon.json';
+import eveningAnimation from '../assets/animations/evening.json';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -108,15 +114,27 @@ const Dashboard = () => {
       .slice(0, 5);
   };
 
-  // Get time-based greeting
+  // Get time-based greeting with Lottie animations
   const getGreeting = () => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) {
-      return { text: 'Good morning', icon: '🌅', color: 'text-orange-500' };
+      return { 
+        text: 'Good morning', 
+        animation: morningAnimation, 
+        color: 'text-orange-500' 
+      };
     } else if (currentHour < 17) {
-      return { text: 'Good afternoon', icon: '☀️', color: 'text-yellow-500' };
+      return { 
+        text: 'Good afternoon', 
+        animation: afternoonAnimation, 
+        color: 'text-yellow-500' 
+      };
     } else {
-      return { text: 'Good evening', icon: '🌙', color: 'text-blue-500' };
+      return { 
+        text: 'Good evening', 
+        animation: eveningAnimation, 
+        color: 'text-blue-500' 
+      };
     }
   };
 
@@ -377,10 +395,15 @@ const Dashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Welcome Message */}
+        {/* Welcome Message with Lottie Animation */}
         <div className="mb-6">
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">{getGreeting().icon}</span>
+          <div className="flex items-center space-x-3">
+            <LottieIcon 
+              animationData={getGreeting().animation} 
+              width={40} 
+              height={40}
+              className="flex-shrink-0"
+            />
             <h2 className="text-lg font-medium text-gray-900">
               {getGreeting().text}, {user?.name}!
             </h2>
