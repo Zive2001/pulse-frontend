@@ -68,7 +68,7 @@ const Login = () => {
       <div className="w-full max-w-5xl">
         {/* Top Greeting */}
         <div className="text-center mb-12">
-          <h1 className="text-lg sm:text-xl text-gray-700 mb-1">
+          <h1 className="text-base sm:text-xl text-gray-700 mb-1">
             Welcome back to,
           </h1>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
@@ -79,7 +79,7 @@ const Login = () => {
               Pulse
             </span>
           </h2>
-          <p className="text-gray-600 text-base sm:text-lg">
+          <p className="text-gray-600 text-sm sm:text-lg">
             Raise and track support tickets for all your digital system needs
           </p>
         </div>
@@ -95,15 +95,12 @@ const Login = () => {
                   src={images[currentImageIndex]}
                   alt="Digital workspace illustration"
                   className="w-full h-full object-contain absolute inset-0"
-                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ 
-                    duration: 0.8,
-                    ease: [0.4, 0, 0.2, 1],
-                    type: "spring",
-                    stiffness: 100,
-                    damping: 15
+                    duration: 0.5,
+                    ease: "easeInOut"
                   }}
                 />
               </AnimatePresence>
