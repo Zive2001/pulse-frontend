@@ -1,6 +1,9 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { MsalProvider } from '@azure/msal-react';
+import { PublicClientApplication } from '@azure/msal-browser';
+import { msalConfig } from './config/msalConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoadingProvider, useLoading } from './context/LoadingProvider';
 import ToastProvider from './components/ToastProvider';
@@ -12,8 +15,19 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateTicket from './pages/CreateTicket';
 import MyTickets from './pages/MyTickets';
-import TicketDetail from './pages/TicketDetail'; // 🔥 New import for individual ticket view
+import TicketDetail from './pages/TicketDetail';
 import Admin from './pages/Admin';
+
+// Create MSAL instance
+const msalInstance = new PublicClientApplication(msalConfig);
+
+// Initialize MSAL
+msalInstance.initialize().then(() => {
+  // Handle redirect promise
+  msalInstance.handleRedirectPromise().catch(error => {
+    console.error('Error handling redirect:', error);
+  });
+});
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -106,7 +120,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Individual Ticket Details Route */}
       <Route
         path="/tickets/:id"
         element={
@@ -116,7 +129,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Future Routes */}
       <Route
         path="/reports"
         element={
@@ -157,15 +169,17 @@ const AppContent = () => {
 // Main App Component
 function App() {
   return (
-    <LoadingProvider>
-      <Router>
-        <AuthProvider>
-          <ToastProvider>
-            <AppContent />
-          </ToastProvider>
-        </AuthProvider>
-      </Router>
-    </LoadingProvider>
+    <MsalProvider instance={msalInstance}>
+      <LoadingProvider>
+        <Router>
+          <AuthProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </AuthProvider>
+        </Router>
+      </LoadingProvider>
+    </MsalProvider>
   );
 }
 
