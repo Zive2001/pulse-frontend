@@ -1,10 +1,37 @@
+// src/services/auth.js
 import api from './api';
 
 export const authService = {
-  // Login with email
+  // Login with Azure AD account
+  async loginWithAzureAD(account) {
+    try {
+      const response = await api.post('/api/auth/azure-login', {
+        email: account.username,
+        name: account.name,
+        azureId: account.homeAccountId,
+        tenantId: account.tenantId,
+      });
+      
+      if (response.success) {
+        const { token, user } = response.data;
+        
+        // Store in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        return { success: true, token, user };
+      }
+      
+      throw new Error(response.message || 'Login failed');
+    } catch (error) {
+      throw new Error(error.message || 'Login failed');
+    }
+  },
+
+  // Legacy email login (keep for backward compatibility if needed)
   async login(email) {
     try {
-      const response = await api.post('/api/auth/login', { email }); // Added /api prefix
+      const response = await api.post('/api/auth/login', { email });
       
       if (response.success) {
         const { token, user } = response.data;
@@ -25,7 +52,7 @@ export const authService = {
   // Get current user profile
   async getProfile() {
     try {
-      const response = await api.get('/api/auth/profile'); // Added /api prefix
+      const response = await api.get('/api/auth/profile');
       return response.data;
     } catch (error) {
       throw new Error(error.message || 'Failed to get profile');
@@ -35,7 +62,7 @@ export const authService = {
   // Logout
   async logout() {
     try {
-      await api.post('/api/auth/logout'); // Added /api prefix
+      await api.post('/api/auth/logout');
     } catch (error) {
       // Continue with logout even if API call fails
       console.error('Logout API error:', error);
