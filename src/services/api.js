@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://sg-prod-bdyapp-pulsebackend-a9b5gsd9f8d7f5f7.southeastasia-01.azurewebsites.net',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   timeout: 30000, // Increased timeout for Azure
   headers: {
     'Content-Type': 'application/json',
