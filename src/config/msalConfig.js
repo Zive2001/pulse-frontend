@@ -1,11 +1,13 @@
 // src/config/msalConfig.js
-import { Configuration, LogLevel } from '@azure/msal-browser';
+import { LogLevel } from '@azure/msal-browser';
 
-// MSAL Configuration
+// Remove Configuration from the import since it's not exported
+// The msalConfig object structure is correct as-is
+
 export const msalConfig = {
   auth: {
-    clientId: '8a31634b-d397-48f3-881e-95c21b3ead5f', // Replace with your Application (client) ID
-    authority: 'https://login.microsoftonline.com/519f28ec-a14a-45a5-8697-409b75aeadca', // Replace with your Directory (tenant) ID
+    clientId: '8a31634b-d397-48f3-881e-95c21b3ead5f',
+    authority: 'https://login.microsoftonline.com/519f28ec-a14a-45a5-8697-409b75aeadca',
     redirectUri: window.location.origin,
     postLogoutRedirectUri: window.location.origin,
   },
@@ -38,12 +40,10 @@ export const msalConfig = {
   },
 };
 
-// Login request configuration
 export const loginRequest = {
   scopes: ['openid', 'profile', 'email', 'User.Read'],
 };
 
-// Graph API request configuration
 export const graphConfig = {
   graphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
 };
