@@ -1,17 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, ArrowRight, Building2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Microsoft icon component
+  const MicrosoftIcon = () => (
+    <svg className="w-4 h-4 mr-2" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 1h10v10H1z" fill="#f25022"/>
+      <path d="M12 1h10v10H12z" fill="#00a4ef"/>
+      <path d="M1 12h10v10H1z" fill="#ffb900"/>
+      <path d="M12 12h10v10H12z" fill="#7fba00"/>
+    </svg>
+  );
+
+  // Array of images to cycle through
+  const images = [
+    '/digital-nomad.svg',
+    '/man-riding-a-rocket.svg',
+    '/remote-work.svg',
+    '/home-office.svg'
+  ];
+
+  // Image rotation effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        (prevIndex + 1) % images.length
+      );
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [images.length]);
 
   const handleAzureLogin = async () => {
     setLoading(true);
@@ -37,10 +68,10 @@ const Login = () => {
       <div className="w-full max-w-5xl">
         {/* Top Greeting */}
         <div className="text-center mb-12">
-          <h1 className="text-l text-gray-700 mb-1">
+          <h1 className="text-lg sm:text-xl text-gray-700 mb-1">
             Welcome back to,
           </h1>
-          <h2 className="text-4xl font-bold tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-[#E87A0B] via-[#F68009] via-[#FFA004] to-[#FFB601] bg-clip-text text-transparent">
               Bodyline
             </span>{" "}
@@ -48,41 +79,59 @@ const Login = () => {
               Pulse
             </span>
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-base sm:text-lg">
             Raise and track support tickets for all your digital system needs
           </p>
         </div>
 
         {/* Main Content */}
-        <div className="flex items-center justify-center gap-16">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
           {/* Illustration */}
-          <div className="hidden lg:block flex-shrink-0">
-            <img 
-              src="/digital-nomad.svg" 
-              alt="Digital workspace illustration" 
-              className="w-80 h-80 object-contain"
-            />
+          <div className="flex-shrink-0 order-1 lg:order-none">
+            <div className="w-60 h-60 sm:w-72 sm:h-72 lg:w-80 lg:h-80 relative">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImageIndex}
+                  src={images[currentImageIndex]}
+                  alt="Digital workspace illustration"
+                  className="w-full h-full object-contain absolute inset-0"
+                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                  transition={{ 
+                    duration: 0.8,
+                    ease: [0.4, 0, 0.2, 1],
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                />
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Sign In Form */}
-          <div className="w-full max-w-sm">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <div className="w-full max-w-sm order-2 lg:order-none">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Sign In</h2>
-                <p className="text-sm text-gray-600">Sign in with your MAS Holdings account</p>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">Sign In</h2>
+                <p className="text-xs sm:text-sm text-gray-600">Sign in with your MAS Holdings account</p>
               </div>
 
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{error}</p>
+                  <p className="text-xs sm:text-sm text-red-600">{error}</p>
                 </div>
               )}
 
               {/* Azure AD Login Button */}
-              <button
+              <motion.button
                 onClick={handleAzureLogin}
                 disabled={loading}
-                className="w-full bg-[#0078d4] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#106ebe] focus:outline-none focus:ring-2 focus:ring-[#0078d4] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center group"
+                className="w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center group"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
                 {loading ? (
                   <>
@@ -90,16 +139,16 @@ const Login = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Signing in...
+                    <span className="text-sm sm:text-base">Signing in...</span>
                   </>
                 ) : (
                   <>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Sign in with Microsoft
+                    <MicrosoftIcon />
+                    <span className="text-sm sm:text-base">Sign in with Microsoft</span>
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform duration-200" />
                   </>
                 )}
-              </button>
+              </motion.button>
 
               {/* Help Text */}
               <div className="mt-6 text-center">
@@ -118,8 +167,8 @@ const Login = () => {
         </div>
 
         {/* Bottom Features */}
-        <div className="mt-16 text-center">
-          <div className="flex justify-center items-center space-x-8 text-sm text-gray-400">
+        <div className="mt-12 lg:mt-16 text-center">
+          <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8 text-xs sm:text-sm text-gray-400">
             <span>✓ Secure Microsoft Login</span>
             <span>✓ Real-time Updates</span>
             <span>✓ Track your Tickets at one place</span>
