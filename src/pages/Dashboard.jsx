@@ -18,6 +18,7 @@ import {
   Settings,
   Bell,
   Search,
+  Shield, // Added for admin icon
 } from 'lucide-react';
 
 // Import your Lottie animation files
@@ -270,6 +271,11 @@ const Dashboard = () => {
     }
   };
 
+  // Check if user is admin
+  const isAdmin = () => {
+    return user?.role === 'admin';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -297,6 +303,8 @@ const Dashboard = () => {
                     ? 'Manager Dashboard'
                     : user?.role === 'digital_team'
                     ? 'Support Dashboard'
+                    : user?.role === 'admin'
+                    ? 'Admin Dashboard'
                     : 'Dashboard'}
                 </h1>
               </div>
@@ -311,6 +319,17 @@ const Dashboard = () => {
                   <User className="w-4 h-4 text-gray-600" />
                 </div>
               </div>
+
+              {/* Admin Button in Header */}
+              {isAdmin() && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Admin Panel"
+                >
+                  <Shield className="w-5 h-5" />
+                </button>
+              )}
 
               <div className="relative notification-dropdown">
                 <button
@@ -451,6 +470,19 @@ const Dashboard = () => {
                   ? 'Manage All Tickets'
                   : 'View My Tickets'}
               </button>
+              
+              {/* Admin Panel Button in Quick Actions */}
+              {isAdmin() && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors flex items-center"
+                  style={{ backgroundColor: '#2a9d8f' }}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </button>
+              )}
+              
               {user?.role === 'manager' && stats.pendingApproval > 0 && (
                 <button
                   onClick={() => navigate('/my-tickets')}
@@ -524,6 +556,8 @@ const Dashboard = () => {
                 ? 'Management Overview'
                 : user?.role === 'digital_team'
                 ? 'Team Dashboard'
+                : user?.role === 'admin'
+                ? 'Admin Overview'
                 : 'Your Activity'}
             </h3>
             {user?.role === 'manager' ? (
@@ -550,6 +584,21 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">In progress</span>
                   <span className="font-semibold text-yellow-600">{stats.inProgress}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Urgent tickets</span>
+                  <span className="font-semibold text-red-600">{stats.urgent}</span>
+                </div>
+              </div>
+            ) : user?.role === 'admin' ? (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total system tickets</span>
+                  <span className="font-semibold text-blue-600">{stats.total}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Pending approval</span>
+                  <span className="font-semibold text-orange-600">{stats.pendingApproval}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Urgent tickets</span>

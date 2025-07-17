@@ -426,7 +426,7 @@ Are you sure you want to proceed?`;
                         name="software_name"
                         value={formData.software_name}
                         onChange={handleInputChange}
-                        placeholder="e.g., SAP, Oracle, Microsoft Teams..."
+                        placeholder="e.g., VR, KOT, Gatepass..."
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent hover:border-gray-400 transition-all"
                       />
                     </div>

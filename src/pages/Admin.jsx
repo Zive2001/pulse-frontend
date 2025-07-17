@@ -294,6 +294,7 @@ function UserManagementSection({ users, fetchUsers }) {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       user.role === 'admin' ? 'bg-red-100 text-red-800' :
                       user.role === 'manager' ? 'bg-yellow-100 text-yellow-800' :
+                      user.role === 'digital_team' ? 'bg-blue-100 text-blue-800' :
                       'bg-green-100 text-green-800'
                     }`}>
                       {user.role?.toUpperCase() || 'USER'}
@@ -308,6 +309,7 @@ function UserManagementSection({ users, fetchUsers }) {
                       <option value="user">User</option>
                       <option value="manager">Manager</option>
                       <option value="admin">Admin</option>
+                      <option value="digital_team">Digital_Team</option>
                     </select>
                   </td>
                 </tr>
