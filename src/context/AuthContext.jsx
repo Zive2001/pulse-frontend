@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     if (inProgress === 'none') {
-      initializeAuth();
+    initializeAuth();
     }
   }, [accounts, inProgress]);
 

@@ -164,15 +164,9 @@ const Login = () => {
         </div>
 
         {/* Bottom Features */}
-<<<<<<< HEAD
-        <div className="mt-16 text-center">
-          <div className="flex justify-center items-center space-x-8 text-sm text-gray-400">
-            <span>✓ One-Platform </span>
-=======
         <div className="mt-12 lg:mt-16 text-center">
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8 text-xs sm:text-sm text-gray-400">
             <span>✓ Secure Microsoft Login</span>
->>>>>>> 652fb7b4d6eefc17d52d5938b2548e65e3d3ceea
             <span>✓ Real-time Updates</span>
             <span>✓ Track your Tickets at one place</span>
           </div>
