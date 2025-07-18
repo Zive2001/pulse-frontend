@@ -227,9 +227,9 @@ const Login = () => {
         {/* Bottom Features */}
         <div className="mt-16 text-center">
           <div className="flex justify-center items-center space-x-8 text-sm text-gray-400">
-            <span>✓ Secure Access</span>
+            <span>✓ One-Platform </span>
             <span>✓ Real-time Updates</span>
-            <span>✓ Role-based Permissions</span>
+            <span>✓ Track your Tickets at one place</span>
           </div>
         </div>
       </div>
