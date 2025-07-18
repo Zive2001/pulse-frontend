@@ -1,6 +1,7 @@
 // src/pages/Admin.jsx
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../services/admin';
+import { ticketsService } from '../services/tickets';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -43,6 +44,7 @@ export default function Admin() {
           break;
         case TABS.SUBCATEGORIES:
           await fetchSubcategories();
+          await fetchCategories(); // Also fetch categories for dropdown
           break;
         case TABS.TICKETS:
           await fetchTickets();
@@ -101,9 +103,7 @@ export default function Admin() {
 
   const fetchTickets = async () => {
     try {
-      // Note: You'll need to add getAllTickets method to adminService
-      // For now, using empty array as placeholder
-      const data = []; // await adminService.getAllTickets();
+      const data = await adminService.getAllTickets();
       setTickets(data);
     } catch (error) {
       toast.error('Failed to fetch tickets');
@@ -159,7 +159,9 @@ export default function Admin() {
             {activeTab === TABS.SUPPORT_PERSONS && (
               <SupportPersonSection 
                 supportPersons={supportPersons} 
-                fetchSupportPersons={fetchSupportPersons} 
+                fetchSupportPersons={fetchSupportPersons}
+                categories={categories}
+                fetchCategories={fetchCategories}
               />
             )}
             {activeTab === TABS.CATEGORIES && (
@@ -194,7 +196,7 @@ export default function Admin() {
 // ---------------------
 
 function UserManagementSection({ users, fetchUsers }) {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm();
 
   const handleAddManager = async (data) => {
     try {
@@ -226,7 +228,7 @@ function UserManagementSection({ users, fetchUsers }) {
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-64">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
+              Email Address *
             </label>
             <input
               {...register('email', { 
@@ -238,6 +240,20 @@ function UserManagementSection({ users, fetchUsers }) {
               })}
               type="email"
               placeholder="manager@example.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.email && (
+              <span className="text-red-500 text-xs mt-1">{errors.email.message}</span>
+            )}
+          </div>
+          <div className="flex-1 min-w-48">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Name (Optional)
+            </label>
+            <input
+              {...register('name')}
+              type="text"
+              placeholder="Manager Name"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -276,22 +292,24 @@ function UserManagementSection({ users, fetchUsers }) {
                   <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                      user.role === 'MANAGER' ? 'bg-yellow-100 text-yellow-800' :
+                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      user.role === 'manager' ? 'bg-yellow-100 text-yellow-800' :
+                      user.role === 'digital_team' ? 'bg-blue-100 text-blue-800' :
                       'bg-green-100 text-green-800'
                     }`}>
-                      {user.role}
+                      {user.role?.toUpperCase() || 'USER'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <select
-                      defaultValue={user.role}
+                      defaultValue={user.role || 'user'}
                       onChange={(e) => handleUpdateRole(user.id, e.target.value)}
                       className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="USER">User</option>
-                      <option value="MANAGER">Manager</option>
-                      <option value="ADMIN">Admin</option>
+                      <option value="user">User</option>
+                      <option value="manager">Manager</option>
+                      <option value="admin">Admin</option>
+                      <option value="digital_team">Digital_Team</option>
                     </select>
                   </td>
                 </tr>
@@ -304,8 +322,15 @@ function UserManagementSection({ users, fetchUsers }) {
   );
 }
 
-function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+function SupportPersonSection({ supportPersons, fetchSupportPersons, categories, fetchCategories }) {
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm();
+
+  // Load categories when component mounts
+  useEffect(() => {
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, [categories.length, fetchCategories]);
 
   const handleAddSupportPerson = async (data) => {
     try {
@@ -332,26 +357,16 @@ function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
     }
   };
 
-  const handleUpdateSupportPerson = async (id, data) => {
-    try {
-      await adminService.updateSupportPerson(id, data);
-      toast.success('Support person updated successfully');
-      fetchSupportPersons();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update support person');
-    }
-  };
-
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4 text-gray-800">Support Persons</h2>
       
       {/* Add Support Person Form */}
       <form onSubmit={handleSubmit(handleAddSupportPerson)} className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-48">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
+              Name *
             </label>
             <input
               {...register('name', { required: 'Name is required' })}
@@ -359,10 +374,13 @@ function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
               placeholder="John Doe"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {errors.name && (
+              <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+            )}
           </div>
-          <div className="flex-1 min-w-48">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              Email *
             </label>
             <input
               {...register('email', { 
@@ -376,14 +394,38 @@ function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
               placeholder="john@example.com"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {errors.email && (
+              <span className="text-red-500 text-xs mt-1">{errors.email.message}</span>
+            )}
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Adding...' : 'Add Support Person'}
-          </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category *
+            </label>
+            <select
+              {...register('category_id', { required: 'Category is required' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            {errors.category_id && (
+              <span className="text-red-500 text-xs mt-1">{errors.category_id.message}</span>
+            )}
+          </div>
+          <div className="md:col-span-3">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Adding...' : 'Add Support Person'}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -394,13 +436,15 @@ function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
             <tr className="bg-gray-100">
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
             {supportPersons.length === 0 ? (
               <tr>
-                <td colSpan="3" className="px-4 py-8 text-center text-gray-500">
+                <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                   No support persons found
                 </td>
               </tr>
@@ -409,6 +453,14 @@ function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
                 <tr key={sp.id} className="border-t border-gray-200 hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">{sp.name}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{sp.email}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{sp.category_name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      sp.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {sp.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-sm">
                     <button
                       onClick={() => handleDeleteSupportPerson(sp.id)}
@@ -428,7 +480,7 @@ function SupportPersonSection({ supportPersons, fetchSupportPersons }) {
 }
 
 function CategorySection({ categories, fetchCategories }) {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm();
 
   const handleAddCategory = async (data) => {
     try {
@@ -464,7 +516,7 @@ function CategorySection({ categories, fetchCategories }) {
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-64">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category Name
+              Category Name *
             </label>
             <input
               {...register('name', { required: 'Category name is required' })}
@@ -472,6 +524,9 @@ function CategorySection({ categories, fetchCategories }) {
               placeholder="e.g., Technical Support"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {errors.name && (
+              <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+            )}
           </div>
           <button
             type="submit"
@@ -490,13 +545,14 @@ function CategorySection({ categories, fetchCategories }) {
             <tr className="bg-gray-100">
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">ID</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Created</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
             {categories.length === 0 ? (
               <tr>
-                <td colSpan="3" className="px-4 py-8 text-center text-gray-500">
+                <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
                   No categories found
                 </td>
               </tr>
@@ -505,6 +561,9 @@ function CategorySection({ categories, fetchCategories }) {
                 <tr key={cat.id} className="border-t border-gray-200 hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">{cat.id}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{cat.name}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">
+                    {cat.created_at ? new Date(cat.created_at).toLocaleDateString() : 'N/A'}
+                  </td>
                   <td className="px-4 py-3 text-sm">
                     <button
                       onClick={() => handleDeleteCategory(cat.id)}
@@ -524,7 +583,7 @@ function CategorySection({ categories, fetchCategories }) {
 }
 
 function SubcategorySection({ subcategories, categories, fetchSubcategories, fetchCategories }) {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm();
 
   // Fetch categories when component mounts if not already loaded
   useEffect(() => {
@@ -535,10 +594,10 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
 
   const handleAddSubcategory = async (data) => {
     try {
-      // Convert categoryId to number
       const subcategoryData = {
         ...data,
-        categoryId: parseInt(data.categoryId)
+        category_id: parseInt(data.category_id),
+        requires_text_input: data.requires_text_input || false
       };
       await adminService.addSubcategory(subcategoryData);
       toast.success('Subcategory added successfully');
@@ -546,6 +605,20 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
       reset();
     } catch (error) {
       toast.error(error.message || 'Failed to add subcategory');
+    }
+  };
+
+  const handleDeleteSubcategory = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this subcategory?')) {
+      return;
+    }
+    
+    try {
+      await adminService.deleteSubcategory(id);
+      toast.success('Subcategory deleted successfully');
+      fetchSubcategories();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete subcategory');
     }
   };
 
@@ -560,10 +633,10 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
       
       {/* Add Subcategory Form */}
       <form onSubmit={handleSubmit(handleAddSubcategory)} className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-48">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Subcategory Name
+              Subcategory Name *
             </label>
             <input
               {...register('name', { required: 'Subcategory name is required' })}
@@ -571,13 +644,16 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
               placeholder="e.g., Password Reset"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {errors.name && (
+              <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+            )}
           </div>
-          <div className="flex-1 min-w-48">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
+              Category *
             </label>
             <select
-              {...register('categoryId', { required: 'Category is required' })}
+              {...register('category_id', { required: 'Category is required' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a category</option>
@@ -587,14 +663,32 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
                 </option>
               ))}
             </select>
+            {errors.category_id && (
+              <span className="text-red-500 text-xs mt-1">{errors.category_id.message}</span>
+            )}
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Adding...' : 'Add Subcategory'}
-          </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Requires Text Input
+            </label>
+            <div className="flex items-center pt-2">
+              <input
+                {...register('requires_text_input')}
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm text-gray-600">Yes</span>
+            </div>
+          </div>
+          <div className="md:col-span-3">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Adding...' : 'Add Subcategory'}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -606,13 +700,14 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">ID</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category ID</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Requires Text</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
             {subcategories.length === 0 ? (
               <tr>
-                <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                   No subcategories found
                 </td>
               </tr>
@@ -621,8 +716,22 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
                 <tr key={sc.id} className="border-t border-gray-200 hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">{sc.id}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{sc.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{getCategoryName(sc.categoryId)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{sc.categoryId}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{sc.category_name || getCategoryName(sc.category_id)}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      sc.requires_text_input ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {sc.requires_text_input ? 'Yes' : 'No'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <button
+                      onClick={() => handleDeleteSubcategory(sc.id)}
+                      className="text-red-600 hover:text-red-900 font-medium"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -634,7 +743,7 @@ function SubcategorySection({ subcategories, categories, fetchSubcategories, fet
 }
 
 function TicketSection({ tickets, fetchTickets }) {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm();
 
   const handleDeleteTicket = async (data) => {
     if (!window.confirm(`Are you sure you want to delete ticket ${data.ticketId}? This action cannot be undone.`)) {
@@ -658,21 +767,24 @@ function TicketSection({ tickets, fetchTickets }) {
       {/* Delete Ticket Form */}
       <form onSubmit={handleSubmit(handleDeleteTicket)} className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
         <h3 className="text-lg font-medium text-red-800 mb-3">Delete Ticket</h3>
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-48">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <div>
             <label className="block text-sm font-medium text-red-700 mb-1">
-              Ticket ID
+              Ticket ID *
             </label>
             <input
               {...register('ticketId', { required: 'Ticket ID is required' })}
               type="text"
-              placeholder="e.g., TICKET-001"
+              placeholder="e.g., 123"
               className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
             />
+            {errors.ticketId && (
+              <span className="text-red-500 text-xs mt-1">{errors.ticketId.message}</span>
+            )}
           </div>
-          <div className="flex-1 min-w-48">
+          <div>
             <label className="block text-sm font-medium text-red-700 mb-1">
-              Reason for Deletion
+              Reason for Deletion *
             </label>
             <input
               {...register('reason', { required: 'Reason is required' })}
@@ -680,14 +792,19 @@ function TicketSection({ tickets, fetchTickets }) {
               placeholder="e.g., Duplicate ticket, Spam, etc."
               className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
             />
+            {errors.reason && (
+              <span className="text-red-500 text-xs mt-1">{errors.reason.message}</span>
+            )}
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Deleting...' : 'Delete Ticket'}
-          </button>
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete Ticket'}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -704,8 +821,10 @@ function TicketSection({ tickets, fetchTickets }) {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Ticket Number</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Title</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Created By</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Created</th>
                 </tr>
               </thead>
@@ -713,19 +832,23 @@ function TicketSection({ tickets, fetchTickets }) {
                 {tickets.map((ticket) => (
                   <tr key={ticket.id} className="border-t border-gray-200 hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.id}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticket_number}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.title}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        ticket.status === 'CLOSED' ? 'bg-gray-100 text-gray-800' :
-                        ticket.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
-                        ticket.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' :
+                        ticket.status === 'Closed' ? 'bg-gray-100 text-gray-800' :
+                        ticket.status === 'Resolved' ? 'bg-green-100 text-green-800' :
+                        ticket.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {ticket.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {new Date(ticket.createdAt).toLocaleDateString()}
+                      {ticket.created_by_name || ticket.created_by_email || 'N/A'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
                     </td>
                   </tr>
                 ))}
@@ -740,17 +863,6 @@ function TicketSection({ tickets, fetchTickets }) {
 
 function LogSection({ logs }) {
   const [expandedLog, setExpandedLog] = useState(null);
-
-  const formatLogEntry = (log) => {
-    if (typeof log === 'string') {
-      try {
-        return JSON.parse(log);
-      } catch {
-        return log;
-      }
-    }
-    return log;
-  };
 
   const toggleLogExpansion = (index) => {
     setExpandedLog(expandedLog === index ? null : index);
@@ -767,11 +879,10 @@ function LogSection({ logs }) {
       ) : (
         <div className="space-y-4">
           {logs.map((log, index) => {
-            const formattedLog = formatLogEntry(log);
             const isExpanded = expandedLog === index;
             
             return (
-              <div key={index} className="bg-gray-50 rounded-lg border">
+              <div key={log.id || index} className="bg-gray-50 rounded-lg border">
                 <div 
                   className="p-4 cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => toggleLogExpansion(index)}
@@ -779,17 +890,20 @@ function LogSection({ logs }) {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900">
-                        {formattedLog.action || formattedLog.type || 'Admin Action'}
+                        {log.action_type || 'Admin Action'}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {formattedLog.timestamp 
-                          ? new Date(formattedLog.timestamp).toLocaleString()
+                        {log.action_description || 'No description'}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {log.created_at 
+                          ? new Date(log.created_at).toLocaleString()
                           : `Log ${index + 1}`
                         }
                       </div>
-                      {formattedLog.user && (
+                      {log.admin_name && (
                         <div className="text-xs text-gray-600 mt-1">
-                          by {formattedLog.user}
+                          by {log.admin_name} ({log.admin_email})
                         </div>
                       )}
                     </div>
@@ -815,12 +929,35 @@ function LogSection({ logs }) {
                 
                 {isExpanded && (
                   <div className="border-t bg-white p-4">
-                    <pre className="text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto">
-                      {typeof formattedLog === 'object' 
-                        ? JSON.stringify(formattedLog, null, 2)
-                        : formattedLog
-                      }
-                    </pre>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Action Type:</span>
+                        <span className="ml-2 text-gray-900">{log.action_type}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Target Type:</span>
+                        <span className="ml-2 text-gray-900">{log.target_type}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Target ID:</span>
+                        <span className="ml-2 text-gray-900">{log.target_id}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Admin:</span>
+                        <span className="ml-2 text-gray-900">{log.admin_name}</span>
+                      </div>
+                    </div>
+                    {log.target_details && (
+                      <div className="mt-3">
+                        <span className="font-medium text-gray-700">Details:</span>
+                        <pre className="mt-1 text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto bg-gray-100 p-2 rounded">
+                          {typeof log.target_details === 'string' 
+                            ? log.target_details
+                            : JSON.stringify(log.target_details, null, 2)
+                          }
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -828,16 +965,6 @@ function LogSection({ logs }) {
           })}
         </div>
       )}
-      
-      {/* Raw Logs Fallback */}
-      <div className="mt-8">
-        <h3 className="text-lg font-medium text-gray-800 mb-3">Raw Logs</h3>
-        <div className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto max-h-96">
-          <pre className="text-sm whitespace-pre-wrap">
-            {logs.length > 0 ? JSON.stringify(logs, null, 2) : 'No logs available'}
-          </pre>
-        </div>
-      </div>
     </div>
   );
 }

@@ -5,10 +5,10 @@ export const adminService = {
   // Ticket Management
   async getAllTickets() {
     try {
-      const response = await api.get('/api/admin/tickets');
+      const response = await api.get('/api/tickets/all');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch tickets');
+      throw new Error(error.message || 'Failed to fetch tickets');
     }
   },
 
@@ -19,7 +19,7 @@ export const adminService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to delete ticket');
+      throw new Error(error.message || 'Failed to delete ticket');
     }
   },
 
@@ -29,7 +29,7 @@ export const adminService = {
       const response = await api.get('/api/admin/support-persons');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch support persons');
+      throw new Error(error.message || 'Failed to fetch support persons');
     }
   },
 
@@ -38,7 +38,7 @@ export const adminService = {
       const response = await api.post('/api/admin/support-persons', supportPersonData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to add support person');
+      throw new Error(error.message || 'Failed to add support person');
     }
   },
 
@@ -47,7 +47,7 @@ export const adminService = {
       const response = await api.put(`/api/admin/support-persons/${id}`, supportPersonData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update support person');
+      throw new Error(error.message || 'Failed to update support person');
     }
   },
 
@@ -56,7 +56,7 @@ export const adminService = {
       const response = await api.delete(`/api/admin/support-persons/${id}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to delete support person');
+      throw new Error(error.message || 'Failed to delete support person');
     }
   },
 
@@ -66,7 +66,7 @@ export const adminService = {
       const response = await api.get('/api/admin/users');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch users');
+      throw new Error(error.message || 'Failed to fetch users');
     }
   },
 
@@ -75,7 +75,7 @@ export const adminService = {
       const response = await api.post('/api/admin/managers', managerData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to add manager');
+      throw new Error(error.message || 'Failed to add manager');
     }
   },
 
@@ -84,7 +84,7 @@ export const adminService = {
       const response = await api.put(`/api/admin/users/${userId}/role`, roleData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update user role');
+      throw new Error(error.message || 'Failed to update user role');
     }
   },
 
@@ -94,7 +94,7 @@ export const adminService = {
       const response = await api.get('/api/admin/categories');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch categories');
+      throw new Error(error.message || 'Failed to fetch categories');
     }
   },
 
@@ -103,7 +103,7 @@ export const adminService = {
       const response = await api.post('/api/admin/categories', categoryData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to add category');
+      throw new Error(error.message || 'Failed to add category');
     }
   },
 
@@ -112,7 +112,7 @@ export const adminService = {
       const response = await api.put(`/api/admin/categories/${id}`, categoryData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update category');
+      throw new Error(error.message || 'Failed to update category');
     }
   },
 
@@ -121,7 +121,7 @@ export const adminService = {
       const response = await api.delete(`/api/admin/categories/${id}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to delete category');
+      throw new Error(error.message || 'Failed to delete category');
     }
   },
 
@@ -131,7 +131,7 @@ export const adminService = {
       const response = await api.get('/api/admin/subcategories');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch subcategories');
+      throw new Error(error.message || 'Failed to fetch subcategories');
     }
   },
 
@@ -140,7 +140,7 @@ export const adminService = {
       const response = await api.post('/api/admin/subcategories', subcategoryData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to add subcategory');
+      throw new Error(error.message || 'Failed to add subcategory');
     }
   },
 
@@ -149,7 +149,7 @@ export const adminService = {
       const response = await api.put(`/api/admin/subcategories/${id}`, subcategoryData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update subcategory');
+      throw new Error(error.message || 'Failed to update subcategory');
     }
   },
 
@@ -158,7 +158,7 @@ export const adminService = {
       const response = await api.delete(`/api/admin/subcategories/${id}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to delete subcategory');
+      throw new Error(error.message || 'Failed to delete subcategory');
     }
   },
 
@@ -168,7 +168,7 @@ export const adminService = {
       const response = await api.get('/api/admin/logs');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch admin logs');
+      throw new Error(error.message || 'Failed to fetch admin logs');
     }
   }
 };

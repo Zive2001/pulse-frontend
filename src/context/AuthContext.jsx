@@ -1,4 +1,7 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useMsal } from '@azure/msal-react';
+import { loginRequest } from '../config/msalConfig';
 import { authService } from '../services/auth';
 
 const AuthContext = createContext(null);
@@ -12,35 +15,56 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const { instance, accounts, inProgress } = useMsal();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Initialize auth state on app start
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
-        if (authService.isAuthenticated()) {
-          const currentUser = authService.getCurrentUser();
-          setUser(currentUser);
+        // Check if there's an active account
+        if (accounts.length > 0) {
+          const account = accounts[0];
+          
+          // Get or create user in your backend
+          const result = await authService.loginWithAzureAD(account);
+          if (result.success) {
+            setUser(result.user);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        // Clear invalid auth data
-        authService.logout();
       } finally {
         setLoading(false);
       }
     };
 
-    initializeAuth();
-  }, []);
+    if (inProgress === 'none') {
+      initializeAuth();
+    }
+  }, [accounts, inProgress]);
 
-  const login = async (email) => {
+  const login = async () => {
     try {
       setLoading(true);
-      const { token, user: userData } = await authService.login(email);
-      setUser(userData);
-      return { success: true, user: userData };
+      
+      // Use MSAL to login
+      const response = await instance.loginPopup(loginRequest);
+      
+      if (response.account) {
+        // Send the Azure AD user info to your backend
+        const result = await authService.loginWithAzureAD(response.account);
+        
+        if (result.success) {
+          setUser(result.user);
+          return { success: true, user: result.user };
+        } else {
+          return { success: false, error: result.error };
+        }
+      }
+      
+      return { success: false, error: 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -52,6 +76,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authService.logout();
+      await instance.logoutPopup();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -60,20 +85,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const hasRole = (role) => {
-    return authService.hasRole(role);
+    return user?.role === role;
   };
 
   const hasAnyRole = (roles) => {
-    return authService.hasAnyRole(roles);
+    return roles.includes(user?.role);
   };
 
   const isAuthenticated = () => {
-    return !!user && authService.isAuthenticated();
+    return !!user && accounts.length > 0;
   };
 
   const value = {
     user,
-    loading,
+    loading: loading || inProgress !== 'none',
     login,
     logout,
     hasRole,
