@@ -631,7 +631,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Resolved</span>
-                  <span className="font-semibold text-green-600">{stats.resolved}</span>
+                  <span className="font-semibold text-green-700">{stats.resolved}</span>
                 </div>
               </div>
             )}
