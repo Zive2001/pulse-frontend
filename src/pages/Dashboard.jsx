@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ticketsService } from '../services/tickets';
-import LottieIcon from '../components/LottieIcon'; // Import your Lottie component
+import LottieIcon from '../components/LottieIcon';
 import {
   Plus,
   Ticket,
@@ -18,7 +18,8 @@ import {
   Settings,
   Bell,
   Search,
-  Shield, // Added for admin icon
+  Shield,
+  Database,
 } from 'lucide-react';
 
 // Import your Lottie animation files
@@ -51,7 +52,7 @@ const Dashboard = () => {
       try {
         setLoading(true);
         let ticketsData;
-        if (user?.role === 'manager' || user?.role === 'digital_team') {
+        if (user?.role === 'manager' || user?.role === 'digital_team' || user?.role === 'admin') {
           ticketsData = await ticketsService.getAllTickets();
         } else {
           ticketsData = await ticketsService.getMyTickets();
@@ -101,7 +102,7 @@ const Dashboard = () => {
     // Set notification count based on role
     if (user?.role === 'manager') {
       setNotificationCount(stats.pendingApproval);
-    } else if (user?.role === 'digital_team') {
+    } else if (user?.role === 'digital_team' || user?.role === 'admin') {
       setNotificationCount(stats.urgent);
     } else {
       setNotificationCount(stats.open + stats.inProgress);
@@ -143,7 +144,7 @@ const Dashboard = () => {
   const getNotificationTickets = () => {
     if (user?.role === 'manager') {
       return tickets.filter(t => t.status === 'Pending Approval');
-    } else if (user?.role === 'digital_team') {
+    } else if (user?.role === 'digital_team' || user?.role === 'admin') {
       return tickets.filter(t => t.urgency === 'High');
     } else {
       return tickets.filter(t => ['Open', 'In Progress'].includes(t.status));
@@ -224,7 +225,7 @@ const Dashboard = () => {
           color: 'text-green-600'
         }
       ];
-    } else if (user?.role === 'digital_team') {
+    } else if (user?.role === 'digital_team' || user?.role === 'admin') {
       return [
         ...baseCards,
         {
@@ -351,7 +352,7 @@ const Dashboard = () => {
                     <div className="p-4 border-b border-gray-200">
                       <h3 className="font-semibold text-sm text-gray-700">
                         {user?.role === 'manager' ? 'Pending Approvals' :
-                         user?.role === 'digital_team' ? 'Urgent Tickets' : 'Tasks Needing Attention'}
+                         user?.role === 'digital_team' || user?.role === 'admin' ? 'Urgent Tickets' : 'Tasks Needing Attention'}
                       </h3>
                     </div>
 
@@ -466,7 +467,7 @@ const Dashboard = () => {
                 className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-center"
               >
                 <Ticket className="w-4 h-4 mr-2" />
-                {user?.role === 'manager' || user?.role === 'digital_team'
+                {user?.role === 'manager' || user?.role === 'digital_team' || user?.role === 'admin'
                   ? 'Manage All Tickets'
                   : 'View My Tickets'}
               </button>
@@ -492,7 +493,7 @@ const Dashboard = () => {
                   {stats.pendingApproval} Tickets Need Approval
                 </button>
               )}
-              {user?.role === 'digital_team' && stats.urgent > 0 && (
+              {(user?.role === 'digital_team' || user?.role === 'admin') && stats.urgent > 0 && (
                 <button
                   onClick={() => navigate('/my-tickets')}
                   className="w-full text-left px-4 py-3 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center"
@@ -555,9 +556,9 @@ const Dashboard = () => {
               {user?.role === 'manager'
                 ? 'Management Overview'
                 : user?.role === 'digital_team'
-                ? 'Team Dashboard'
+                ? 'Support Dashboard'
                 : user?.role === 'admin'
-                ? 'Admin Overview'
+                ? 'System Overview'
                 : 'Your Activity'}
             </h3>
             {user?.role === 'manager' ? (
@@ -603,6 +604,19 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Urgent tickets</span>
                   <span className="font-semibold text-red-600">{stats.urgent}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Resolved today</span>
+                  <span className="font-semibold text-green-600">{stats.resolvedToday}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    onClick={() => navigate('/admin')}
+                    className="text-sm text-teal-600 hover:text-teal-800 font-medium flex items-center"
+                  >
+                    <Database className="w-4 h-4 mr-1" />
+                    System Management
+                  </button>
                 </div>
               </div>
             ) : (
