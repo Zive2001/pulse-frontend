@@ -73,7 +73,7 @@ const Login = () => {
           </h1>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-[#E87A0B] via-[#F68009] via-[#FFA004] to-[#FFB601] bg-clip-text text-transparent">
-              Bodyline
+              Digital
             </span>{" "}
             <span className="bg-gradient-to-r from-black via-gray-800 to-gray-700 bg-clip-text text-transparent">
               Pulse

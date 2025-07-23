@@ -41,6 +41,7 @@ const Dashboard = () => {
     urgent: 0,
     pendingApproval: 0,
     resolvedToday: 0,
+    openUrgent: 0, // New stat for open urgent tickets
   });
 
   const [notificationCount, setNotificationCount] = useState(0);
@@ -95,6 +96,7 @@ const Dashboard = () => {
       ).length,
       urgent: ticketsData.filter((t) => t.urgency === 'High').length,
       pendingApproval: ticketsData.filter((t) => t.status === 'Pending Approval').length,
+      openUrgent: ticketsData.filter((t) => t.urgency === 'High' && t.status === 'Open').length, // New calculation
     };
 
     setStats(stats);
@@ -103,7 +105,7 @@ const Dashboard = () => {
     if (user?.role === 'manager') {
       setNotificationCount(stats.pendingApproval);
     } else if (user?.role === 'digital_team' || user?.role === 'admin') {
-      setNotificationCount(stats.urgent);
+      setNotificationCount(stats.openUrgent); // Changed from stats.urgent to stats.openUrgent
     } else {
       setNotificationCount(stats.open + stats.inProgress);
     }
@@ -145,7 +147,7 @@ const Dashboard = () => {
     if (user?.role === 'manager') {
       return tickets.filter(t => t.status === 'Pending Approval');
     } else if (user?.role === 'digital_team' || user?.role === 'admin') {
-      return tickets.filter(t => t.urgency === 'High');
+      return tickets.filter(t => t.urgency === 'High' && t.status === 'Open'); // Changed to filter for open urgent tickets only
     } else {
       return tickets.filter(t => ['Open', 'In Progress'].includes(t.status));
     }
@@ -352,7 +354,7 @@ const Dashboard = () => {
                     <div className="p-4 border-b border-gray-200">
                       <h3 className="font-semibold text-sm text-gray-700">
                         {user?.role === 'manager' ? 'Pending Approvals' :
-                         user?.role === 'digital_team' || user?.role === 'admin' ? 'Urgent Tickets' : 'Tasks Needing Attention'}
+                         user?.role === 'digital_team' || user?.role === 'admin' ? 'Open Urgent Tickets' : 'Tasks Needing Attention'}
                       </h3>
                     </div>
 
@@ -493,13 +495,13 @@ const Dashboard = () => {
                   {stats.pendingApproval} Tickets Need Approval
                 </button>
               )}
-              {(user?.role === 'digital_team' || user?.role === 'admin') && stats.urgent > 0 && (
+              {(user?.role === 'digital_team' || user?.role === 'admin') && stats.openUrgent > 0 && (
                 <button
                   onClick={() => navigate('/my-tickets')}
                   className="w-full text-left px-4 py-3 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center"
                 >
                   <AlertTriangle className="w-4 h-4 mr-2" />
-                  {stats.urgent} Urgent Tickets
+                  {stats.openUrgent} Open Urgent Tickets
                 </button>
               )}
             </div>
@@ -630,7 +632,7 @@ const Dashboard = () => {
                   <span className="font-semibold text-yellow-600">{stats.inProgress}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Resolved</span>
+                  <span className="text-sm   text-gray-600">Resolved</span>
                   <span className="font-semibold text-green-700">{stats.resolved}</span>
                 </div>
               </div>
