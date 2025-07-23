@@ -13,7 +13,10 @@ import {
   Calendar,
   MessageSquare,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  UserCheck,
+  UserX,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ticketsService } from '../services/tickets';
@@ -23,18 +26,20 @@ const MyTickets = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
+  const [supportPersons, setSupportPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [urgencyFilter, setUrgencyFilter] = useState('all');
+  const [supportPersonFilter, setSupportPersonFilter] = useState('all');
   
   // Use ref to track loading state and prevent duplicate calls
   const loadingRef = useRef(false);
   const loadingToastIdRef = useRef(null);
 
-  // Load tickets based on user role
+  // Load tickets and support persons based on user role
   useEffect(() => {
-    const loadTickets = async () => {
+    const loadData = async () => {
       // Prevent multiple simultaneous calls
       if (loadingRef.current || !user) {
         return;
@@ -51,16 +56,25 @@ const MyTickets = () => {
         }
         
         let ticketsData;
+        let supportPersonsData = [];
         
-        if (user?.role === 'manager' || user?.role === 'digital_team') {
-          // Managers and digital team see all tickets
+        if (user?.role === 'manager' || user?.role === 'digital_team' || user?.role === 'admin') {
+          // Managers, digital team, and admin see all tickets
           ticketsData = await ticketsService.getAllTickets();
+          
+          // Get support persons for filtering (only for management views)
+          try {
+            supportPersonsData = await ticketsService.getAllSupportPersons();
+          } catch (error) {
+            console.warn('Failed to load support persons:', error);
+          }
         } else {
           // General users see only their tickets
           ticketsData = await ticketsService.getMyTickets();
         }
         
         setTickets(ticketsData);
+        setSupportPersons(supportPersonsData);
         
         // Dismiss loading toast if it exists
         if (loadingToastIdRef.current) {
@@ -69,7 +83,7 @@ const MyTickets = () => {
         }
         
       } catch (error) {
-        console.error('Failed to load tickets:', error);
+        console.error('Failed to load data:', error);
         
         // Dismiss loading toast if it exists
         if (loadingToastIdRef.current) {
@@ -87,7 +101,7 @@ const MyTickets = () => {
       }
     };
 
-    loadTickets();
+    loadData();
     
     // Cleanup function to dismiss toast if component unmounts
     return () => {
@@ -97,7 +111,7 @@ const MyTickets = () => {
       }
       loadingRef.current = false;
     };
-  }, [user?.id]); // Changed dependency to user?.id instead of user?.role
+  }, [user?.id]);
 
   // Filter tickets based on search and filters
   const filteredTickets = tickets.filter(ticket => {
@@ -108,19 +122,20 @@ const MyTickets = () => {
     
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
     const matchesUrgency = urgencyFilter === 'all' || ticket.urgency === urgencyFilter;
+    const matchesSupportPerson = supportPersonFilter === 'all' || ticket.mentioned_support_person_name === supportPersonFilter;
     
-    return matchesSearch && matchesStatus && matchesUrgency;
+    return matchesSearch && matchesStatus && matchesUrgency && matchesSupportPerson;
   });
 
   // Check if user can update ticket status
   const canUpdateTicketStatus = (ticket) => {
-    // Only managers can update any ticket
+    // Managers can update any ticket
     if (user?.role === 'manager') {
       return true;
     }
     
-    // Digital team members can update tickets, but NOT their own tickets that are pending approval
-    if (user?.role === 'digital_team') {
+    // Digital team members and admin can update tickets, but NOT their own tickets that are pending approval
+    if (user?.role === 'digital_team' || user?.role === 'admin') {
       // If this is their own ticket and it's pending approval, they cannot update it
       if (ticket.created_by_email === user?.email && ticket.status === 'Pending Approval') {
         return false;
@@ -140,6 +155,7 @@ const MyTickets = () => {
       'In Progress': 'bg-amber-50 text-amber-700 border-amber-200',
       'Pending Approval': 'bg-orange-50 text-orange-700 border-orange-200',
       'Resolved': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'Rejected': 'bg-red-50 text-red-700 border-red-200',
       'Closed': 'bg-gray-50 text-gray-600 border-gray-200'
     };
     return badges[status] || 'bg-gray-50 text-gray-600 border-gray-200';
@@ -166,6 +182,8 @@ const MyTickets = () => {
         return <AlertCircle className="w-3.5 h-3.5" />;
       case 'Resolved':
         return <CheckCircle className="w-3.5 h-3.5" />;
+      case 'Rejected':
+        return <XCircle className="w-3.5 h-3.5" />;
       case 'Closed':
         return <XCircle className="w-3.5 h-3.5" />;
       default:
@@ -185,11 +203,11 @@ const MyTickets = () => {
     return statusMessages[newStatus] || `Ticket ${ticketNumber} status updated to ${newStatus}`;
   };
 
-  // Handle ticket status update (for managers and digital team)
+  // Handle ticket status update (for managers, digital team, and admin)
   const handleStatusUpdate = async (ticketId, newStatus) => {
     const ticket = tickets.find(t => t.id === ticketId);
     
-    // Additional check to prevent digital team from updating their own pending tickets
+    // Additional check to prevent digital team/admin from updating their own pending tickets
     if (!canUpdateTicketStatus(ticket)) {
       showErrorToast(
         'You cannot update the status of your own ticket while it is pending approval.',
@@ -276,6 +294,47 @@ const MyTickets = () => {
     }
   };
 
+  // Handle ticket rejection (for managers only)
+  const handleRejectTicket = async (ticketId) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    let loadingToastId;
+    
+    try {
+      loadingToastId = showLoadingToast(`Rejecting ticket ${ticket?.ticket_number}...`);
+      
+      await ticketsService.rejectTicket(ticketId);
+      
+      // Update local state
+      setTickets(prev => prev.map(ticket => 
+        ticket.id === ticketId 
+          ? { ...ticket, status: 'Rejected' }
+          : ticket
+      ));
+      
+      // Dismiss loading toast
+      dismissToast(loadingToastId);
+      
+      // Show success message
+      showSuccessToast(
+        `Ticket ${ticket?.ticket_number} has been rejected`,
+        { duration: 4000 }
+      );
+      
+    } catch (error) {
+      console.error('Failed to reject ticket:', error);
+      
+      // Dismiss loading toast
+      if (loadingToastId) {
+        dismissToast(loadingToastId);
+      }
+      
+      showErrorToast(
+        `Failed to reject ticket ${ticket?.ticket_number}. Please try again.`,
+        { duration: 5000 }
+      );
+    }
+  };
+
   // Handle filter changes with user feedback
   const handleFilterChange = (filterType, value) => {
     switch (filterType) {
@@ -291,6 +350,12 @@ const MyTickets = () => {
         // Only show toast for specific filters, not "all"
         if (value !== 'all') {
           showSuccessToast(`Showing ${value} priority tickets`, { duration: 2000 });
+        }
+        break;
+      case 'supportPerson':
+        setSupportPersonFilter(value);
+        if (value !== 'all') {
+          showSuccessToast(`Showing tickets for ${value}`, { duration: 2000 });
         }
         break;
       default:
@@ -313,6 +378,11 @@ const MyTickets = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Check if user is in management role
+  const isManagementRole = () => {
+    return user?.role === 'manager' || user?.role === 'digital_team' || user?.role === 'admin';
   };
 
   if (loading) {
@@ -353,11 +423,12 @@ const MyTickets = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {user?.role === 'manager' || user?.role === 'digital_team' ? 'All Tickets' : 'My Tickets'}
+                  {isManagementRole() ? 'All Tickets' : 'My Tickets'}
                 </h1>
                 <p className="text-gray-600 mt-1">
                   {user?.role === 'manager' ? 'Manage and track all support tickets' :
                    user?.role === 'digital_team' ? 'View and work on assigned tickets' :
+                   user?.role === 'admin' ? 'System-wide ticket management and oversight' :
                    'Track your submitted support requests'}
                 </p>
               </div>
@@ -377,7 +448,7 @@ const MyTickets = () => {
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={`grid grid-cols-1 ${isManagementRole() ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -403,6 +474,7 @@ const MyTickets = () => {
                 <option value="In Progress">In Progress</option>
                 <option value="Pending Approval">Pending Approval</option>
                 <option value="Resolved">Resolved</option>
+                <option value="Rejected">Rejected</option>
                 <option value="Closed">Closed</option>
               </select>
             </div>
@@ -420,10 +492,29 @@ const MyTickets = () => {
                 <option value="Low">Low</option>
               </select>
             </div>
+
+            {/* Support Person Filter - Only for management roles */}
+            {isManagementRole() && (
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <select
+                  value={supportPersonFilter}
+                  onChange={(e) => handleFilterChange('supportPerson', e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="all">All Support Persons</option>
+                  {supportPersons.map((person) => (
+                    <option key={person.id} value={person.name}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           
           {/* Filter Results Summary */}
-          {(searchTerm || statusFilter !== 'all' || urgencyFilter !== 'all') && (
+          {(searchTerm || statusFilter !== 'all' || urgencyFilter !== 'all' || supportPersonFilter !== 'all') && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600">
@@ -431,12 +522,14 @@ const MyTickets = () => {
                   {searchTerm && ` matching "${searchTerm}"`}
                   {statusFilter !== 'all' && ` with status "${statusFilter}"`}
                   {urgencyFilter !== 'all' && ` with urgency "${urgencyFilter}"`}
+                  {supportPersonFilter !== 'all' && ` for support person "${supportPersonFilter}"`}
                 </p>
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setStatusFilter('all');
                     setUrgencyFilter('all');
+                    setSupportPersonFilter('all');
                     showSuccessToast('Filters cleared successfully', { duration: 2000 });
                   }}
                   className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
@@ -523,6 +616,13 @@ const MyTickets = () => {
                         <span>Assigned to: {ticket.assigned_to_name}</span>
                       </div>
                     )}
+                    
+                    {ticket.mentioned_support_person_name && (
+                      <div className="flex items-center text-gray-600">
+                        <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>Support: {ticket.mentioned_support_person_name}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -535,10 +635,10 @@ const MyTickets = () => {
                       <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
                     </button>
                     
-                    {/* Manager/Digital Team Actions */}
+                    {/* Manager/Digital Team/Admin Actions */}
                     {canUpdateTicketStatus(ticket) && (
                       <>
-                        {ticket.status !== 'Resolved' && ticket.status !== 'Closed' && (
+                        {ticket.status !== 'Resolved' && ticket.status !== 'Closed' && ticket.status !== 'Rejected' && (
                           <select
                             value={ticket.status}
                             onChange={(e) => handleStatusUpdate(ticket.id, e.target.value)}
@@ -553,23 +653,41 @@ const MyTickets = () => {
                       </>
                     )}
                     
-                    {/* Manager Approval */}
+                    {/* Manager Approval/Rejection */}
                     {user?.role === 'manager' && ticket.status === 'Pending Approval' && (
-                      <button
-                        onClick={() => handleApproveTicket(ticket.id)}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors font-medium"
-                      >
-                        Approve
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleApproveTicket(ticket.id)}
+                          className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors font-medium flex items-center"
+                        >
+                          <UserCheck className="w-4 h-4 mr-1" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectTicket(ticket.id)}
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors font-medium flex items-center"
+                        >
+                          <UserX className="w-4 h-4 mr-1" />
+                          Reject
+                        </button>
+                      </div>
                     )}
                     
-                    {/* Show warning message for digital team members viewing their own pending tickets */}
-                    {user?.role === 'digital_team' && 
+                    {/* Show warning message for digital team/admin members viewing their own pending tickets */}
+                    {(user?.role === 'digital_team' || user?.role === 'admin') && 
                      ticket.created_by_email === user?.email && 
                      ticket.status === 'Pending Approval' && (
                       <div className="text-orange-600 text-sm bg-orange-50 px-3 py-1 rounded-lg border border-orange-200">
                         <AlertCircle className="w-4 h-4 inline mr-1" />
                         Awaiting manager approval
+                      </div>
+                    )}
+                    
+                    {/* Show rejected status message */}
+                    {ticket.status === 'Rejected' && (
+                      <div className="text-red-600 text-sm bg-red-50 px-3 py-1 rounded-lg border border-red-200">
+                        <XCircle className="w-4 h-4 inline mr-1" />
+                        Ticket rejected by manager
                       </div>
                     )}
                   </div>

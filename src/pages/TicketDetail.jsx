@@ -19,6 +19,7 @@ import {
   History,
   CheckCircle2,
   UserCheck,
+  UserX,
   Settings,
   ChevronDown,
   ChevronUp
@@ -79,8 +80,8 @@ const TicketDetail = () => {
     // Managers can update any ticket
     if (user.role === 'manager') return true;
     
-    // Digital team members can update tickets, but not their own pending approval tickets
-    if (user.role === 'digital_team') {
+    // Digital team members and admin can update tickets, but not their own pending approval tickets
+    if (user.role === 'digital_team' || user.role === 'admin') {
       if (ticket.created_by_email === user.email && ticket.status === 'Pending Approval') {
         return false;
       }
@@ -192,6 +193,35 @@ const TicketDetail = () => {
     }
   };
 
+  // Handle ticket rejection
+  const handleRejectTicket = async () => {
+    let loadingToastId;
+    
+    try {
+      setUpdating(true);
+      loadingToastId = showLoadingToast('Rejecting ticket...');
+      
+      await ticketsService.rejectTicket(id);
+      
+      // Update local state
+      setTicket(prev => ({ ...prev, status: 'Rejected' }));
+      
+      // Reload history to show the change
+      const historyData = await ticketsService.getTicketHistory(id);
+      setHistory(historyData);
+      
+      dismissToast(loadingToastId);
+      showSuccessToast('Ticket rejected successfully', { duration: 3000 });
+      
+    } catch (error) {
+      console.error('Failed to reject ticket:', error);
+      if (loadingToastId) dismissToast(loadingToastId);
+      showErrorToast('Failed to reject ticket. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   // Get status badge styling
   const getStatusBadge = (status) => {
     const badges = {
@@ -199,6 +229,7 @@ const TicketDetail = () => {
       'In Progress': 'bg-amber-50 text-amber-700 border-amber-200',
       'Pending Approval': 'bg-orange-50 text-orange-700 border-orange-200',
       'Resolved': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'Rejected': 'bg-red-50 text-red-700 border-red-200',
       'Closed': 'bg-gray-50 text-gray-600 border-gray-200'
     };
     return badges[status] || 'bg-gray-50 text-gray-600 border-gray-200';
@@ -225,6 +256,8 @@ const TicketDetail = () => {
         return <AlertCircle className="w-4 h-4" />;
       case 'Resolved':
         return <CheckCircle className="w-4 h-4" />;
+      case 'Rejected':
+        return <XCircle className="w-4 h-4" />;
       case 'Closed':
         return <XCircle className="w-4 h-4" />;
       default:
@@ -337,16 +370,26 @@ const TicketDetail = () => {
                 </span>
               </div>
               
-              {/* Manager Approval Button */}
+              {/* Manager Approval/Rejection Buttons */}
               {user?.role === 'manager' && ticket.status === 'Pending Approval' && (
-                <button
-                  onClick={handleApproveTicket}
-                  disabled={updating}
-                  className="bg-emerald-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm sm:text-base"
-                >
-                  <UserCheck className="w-4 h-4 mr-2" />
-                  {updating ? 'Approving...' : 'Approve'}
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleApproveTicket}
+                    disabled={updating}
+                    className="bg-emerald-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm sm:text-base"
+                  >
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    {updating ? 'Approving...' : 'Approve'}
+                  </button>
+                  <button
+                    onClick={handleRejectTicket}
+                    disabled={updating}
+                    className="bg-red-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm sm:text-base"
+                  >
+                    <UserX className="w-4 h-4 mr-2" />
+                    {updating ? 'Rejecting...' : 'Reject'}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -495,7 +538,7 @@ const TicketDetail = () => {
               </div>
             )}
 
-            {/* Add Remark Form (Digital Team & Manager) */}
+            {/* Add Remark Form (Digital Team, Admin & Manager) */}
             {canUpdateTicket() && (
               <div>
                 {!showRemarkForm ? (
@@ -565,8 +608,8 @@ const TicketDetail = () => {
           </div>
         </div>
 
-        {/* Status Update Section (Digital Team & Manager) */}
-        {canUpdateTicket() && !showRemarkForm && (
+        {/* Status Update Section (Digital Team, Admin & Manager) */}
+        {canUpdateTicket() && !showRemarkForm && ticket.status !== 'Rejected' && (
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200">
             <div className="p-4 sm:p-8">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
