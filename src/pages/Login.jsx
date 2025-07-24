@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, ArrowRight, Building2, Lightbulb, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const from = location.state?.from?.pathname || '/dashboard';
 
   // Microsoft icon component
   const MicrosoftIcon = () => (
@@ -41,9 +49,13 @@ const Login = () => {
     setError('');
 
     try {
-      // Simulate login process - replace with actual auth logic
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Login successful');
+      const result = await login();
+      
+      if (result.success) {
+        navigate(from, { replace: true });
+      } else {
+        setError(result.error || 'Login failed');
+      }
     } catch (error) {
       setError('An unexpected error occurred. Please try again.');
     } finally {
@@ -52,7 +64,7 @@ const Login = () => {
   };
 
   const handleDigitalInitiativeClick = () => {
-    window.open('https://apps.powerapps.com/play/e/default-852c5799-8134-4f15-9d38-eba4296cc76f/a/3af613ce-f679-43a3-8983-61e5f3b80726?tenantId=852c5799-8134-4f15-9d38-eba4296cc76f&hint=b9e9bd47-9103-4425-a769-5ba85bb82b5d&sourcetime=1753326943421&source=portal&hidenavbar=true', '_blank');
+    window.open('https://apps.powerapps.com/play/e/default-852c5799-8134-4f15-9d38-eba4296cc76f/a/4bcfce34-5365-4a4c-9b06-bbc9e5127c5c?tenantId=852c5799-8134-4f15-9d38-eba4296cc76f&hint=052d3a0c-1e98-41aa-9cb6-04c5f35a490c&sourcetime=1753326943424&source=portal&hidenavbar=true', '_blank');
   };
 
   return (
@@ -76,31 +88,7 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Digital Initiative CTA - Minimal Design */}
-        <div className="flex justify-center mb-8">
-          <motion.div 
-            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm max-w-lg w-full"
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Lightbulb className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-900">
-                  Have a groundbreaking digital initiative in mind?
-                </span>
-              </div>
-              <button
-                onClick={handleDigitalInitiativeClick}
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center space-x-1 transition-colors whitespace-nowrap ml-4"
-              >
-                <span>Share Your Vision</span>
-                <ExternalLink className="h-4 w-4" />
-              </button>
-            </div>
-          </motion.div>
-        </div>
+
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
@@ -165,17 +153,50 @@ const Login = () => {
                 )}
               </motion.button>
 
-              {/* Help Text */}
-              <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500">
-                  Need help?{' '}
-                  <a 
-                    href="mailto:bodylineanalytics@masholdings.com" 
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+              {/* Help Text & Digital Initiative CTA */}
+              <div className="mt-6 space-y-4">
+                {/* Help Text */}
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">
+                    Need help?{' '}
+                    <a 
+                      href="mailto:bodylineanalytics@masholdings.com" 
+                      className="text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Contact Support
+                    </a>
+                  </p>
+                </div>
+
+                {/* Subtle Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-2 text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* Digital Initiative CTA - Integrated Design */}
+                <motion.div 
+                  className="text-center"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                >
+                  <p className="text-xs text-gray-600 mb-2">
+                    Have a groundbreaking digital initiative?
+                  </p>
+                  <button
+                    onClick={handleDigitalInitiativeClick}
+                    className="inline-flex items-center space-x-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors group"
                   >
-                    Contact Support
-                  </a>
-                </p>
+                    <Lightbulb className="h-3.5 w-3.5 group-hover:animate-pulse" />
+                    <span>Share Your Vision</span>
+                    <ExternalLink className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+                  </button>
+                </motion.div>
               </div>
             </div>
           </div>
