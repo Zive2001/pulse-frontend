@@ -90,7 +90,16 @@ const CreateTicket = () => {
         ...prev,
         subcategory_id: '',
         subcategory_text: '',
-        mentioned_support_person: ''
+        mentioned_support_person: '',
+        type: '' // Reset request type when category changes
+      }));
+    }
+
+    // Reset request type when subcategory changes
+    if (name === 'subcategory_id') {
+      setFormData(prev => ({
+        ...prev,
+        type: ''
       }));
     }
   };
@@ -104,6 +113,81 @@ const CreateTicket = () => {
     const category = getCurrentCategory();
     if (!category) return null;
     return category.subcategories?.find(sub => sub.id === parseInt(formData.subcategory_id));
+  };
+
+  // Check if we should show system-specific request types
+  const getSystemSpecificLabel = () => {
+    const category = getCurrentCategory();
+    const subcategory = getCurrentSubcategory();
+    
+    if (category?.name === 'Standard Systems' && subcategory?.name === 'PLM') {
+      return 'PLM Options Available';
+    }
+    if (category?.name === 'Software Systems' && subcategory?.name === 'ERP') {
+      return 'ERP Options Available';
+    }
+    if (category?.name === 'Software Systems' && subcategory?.name === 'CRM') {
+      return 'CRM Options Available';
+    }
+    
+    return null;
+  };
+
+  // Get available request types based on category and subcategory
+  const getAvailableRequestTypes = () => {
+    const category = getCurrentCategory();
+    const subcategory = getCurrentSubcategory();
+    
+    // Default request types (always available)
+    const defaultTypes = [
+      { value: 'BreakFix', label: 'Break/Fix' },
+      { value: 'Application Error', label: 'Application Error' },
+      { value: 'System Upgrade', label: 'System Upgrade' },
+      { value: 'Access Creation & Approvals', label: 'Access Creation & Approvals' },
+      { value: 'Change Request', label: 'Change Request' }
+    ];
+
+    // Define request types for different systems
+    const systemSpecificTypes = {
+      // PLM System Types
+      'Standard Systems_PLM': [
+        { value: 'New User Creation', label: 'New User Creation' },
+        { value: 'New Season Creation', label: 'New Season Creation' },
+        { value: 'New Category addition', label: 'New Category addition' },
+        { value: 'Grid Extend', label: 'Grid Extend' },
+        { value: 'New Customer onboarding', label: 'New Customer onboarding' },
+        { value: 'Supplier creation/onboarding', label: 'Supplier creation/onboarding' }
+      ],
+      
+      // Example: ERP System Types (you can add more)
+      'Software Systems_ERP': [
+        { value: 'User Access Request', label: 'User Access Request' },
+        { value: 'Data Migration', label: 'Data Migration' },
+        { value: 'Report Generation', label: 'Report Generation' }
+      ],
+      
+      // Example: CRM System Types
+      'Software Systems_CRM': [
+        { value: 'Lead Import', label: 'Lead Import' },
+        { value: 'Dashboard Setup', label: 'Dashboard Setup' },
+        { value: 'Integration Request', label: 'Integration Request' }
+      ]
+      
+      // Add more system-specific types here as needed
+    };
+
+    // Create a key based on category and subcategory
+    const systemKey = category?.name && subcategory?.name 
+      ? `${category.name}_${subcategory.name}` 
+      : null;
+
+    // Get system-specific types if they exist
+    const specificTypes = systemKey && systemSpecificTypes[systemKey] 
+      ? systemSpecificTypes[systemKey] 
+      : [];
+
+    // Return combined types
+    return [...defaultTypes, ...specificTypes];
   };
 
   // Check if we should show software fields
@@ -188,6 +272,20 @@ const CreateTicket = () => {
           delete submitData[key];
         }
       });
+
+      // Map system-specific request types to backend-compatible values if needed
+      const availableTypes = getAvailableRequestTypes();
+      const isSystemSpecificType = !['BreakFix', 'Application Error', 'Change Request'].includes(submitData.type);
+      
+      if (isSystemSpecificType) {
+        console.log(`Mapping system-specific type "${submitData.type}" to "Change Request" for backend compatibility`);
+        // Store the original system-specific type in description
+        submitData.description = `[${formData.type}] ${submitData.description}`;
+        submitData.type = 'Change Request';
+      }
+
+      // Debug: Log the data being sent
+      console.log('Submitting ticket data:', submitData);
 
       const result = await ticketsService.createTicket(submitData);
       
@@ -453,6 +551,11 @@ Are you sure you want to proceed?`;
                   <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-3">
                       Request Type *
+                      {getSystemSpecificLabel() && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                          {getSystemSpecificLabel()}
+                        </span>
+                      )}
                     </label>
                     <select
                       name="type"
@@ -463,9 +566,11 @@ Are you sure you want to proceed?`;
                       }`}
                     >
                       <option value="">Select request type</option>
-                      <option value="BreakFix">Break/Fix</option>
-                      <option value="Application Error">Application Error</option>
-                      <option value="Change Request">Change Request</option>
+                      {getAvailableRequestTypes().map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
                     </select>
                     {errors.type && <p className="mt-2 text-sm text-red-600 font-medium">{errors.type}</p>}
                   </div>
@@ -576,4 +681,4 @@ Are you sure you want to proceed?`;
   );
 };
 
-export default CreateTicket;
+export default CreateTicket;  

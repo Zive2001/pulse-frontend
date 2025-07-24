@@ -190,10 +190,10 @@ const Login = () => {
                   </p>
                   <button
                     onClick={handleDigitalInitiativeClick}
-                    className="inline-flex items-center space-x-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors group"
+                    className="inline-flex items-center space-x-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors group cursor-pointer"
                   >
                     <Lightbulb className="h-3.5 w-3.5 group-hover:animate-pulse" />
-                    <span>Share Your Vision</span>
+                    <span>Share Your Ideas</span>
                     <ExternalLink className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
                   </button>
                 </motion.div>
