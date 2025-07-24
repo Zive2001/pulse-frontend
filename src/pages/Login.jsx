@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { LogIn, ArrowRight, Building2 } from 'lucide-react';
+import { LogIn, ArrowRight, Building2, Lightbulb, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  const from = location.state?.from?.pathname || '/dashboard';
 
   // Microsoft icon component
   const MicrosoftIcon = () => (
@@ -49,18 +41,18 @@ const Login = () => {
     setError('');
 
     try {
-      const result = await login();
-      
-      if (result.success) {
-        navigate(from, { replace: true });
-      } else {
-        setError(result.error || 'Login failed');
-      }
+      // Simulate login process - replace with actual auth logic
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Login successful');
     } catch (error) {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDigitalInitiativeClick = () => {
+    window.open('https://apps.powerapps.com/play/e/default-852c5799-8134-4f15-9d38-eba4296cc76f/a/3af613ce-f679-43a3-8983-61e5f3b80726?tenantId=852c5799-8134-4f15-9d38-eba4296cc76f&hint=b9e9bd47-9103-4425-a769-5ba85bb82b5d&sourcetime=1753326943421&source=portal&hidenavbar=true', '_blank');
   };
 
   return (
@@ -82,6 +74,32 @@ const Login = () => {
           <p className="text-gray-600 text-sm sm:text-lg">
             Raise and track support tickets for all your digital system needs
           </p>
+        </div>
+
+        {/* Digital Initiative CTA - Minimal Design */}
+        <div className="flex justify-center mb-8">
+          <motion.div 
+            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm max-w-lg w-full"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Lightbulb className="h-5 w-5 text-orange-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-900">
+                  Have a groundbreaking digital initiative in mind?
+                </span>
+              </div>
+              <button
+                onClick={handleDigitalInitiativeClick}
+                className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center space-x-1 transition-colors whitespace-nowrap ml-4"
+              >
+                <span>Share Your Vision</span>
+                <ExternalLink className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
         </div>
 
         {/* Main Content */}
