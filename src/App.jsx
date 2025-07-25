@@ -17,6 +17,7 @@ import CreateTicket from './pages/CreateTicket';
 import MyTickets from './pages/MyTickets';
 import TicketDetail from './pages/TicketDetail';
 import Admin from './pages/Admin';
+import UserGuide from './pages/UserGuide';
 
 // Create MSAL instance
 const msalInstance = new PublicClientApplication(msalConfig);
@@ -116,6 +117,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Admin />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user-guide"
+        element={
+          <ProtectedRoute>
+            <UserGuide />
           </ProtectedRoute>
         }
       />

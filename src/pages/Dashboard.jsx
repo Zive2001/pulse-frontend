@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ticketsService } from '../services/tickets';
 import LottieIcon from '../components/LottieIcon';
+import UserGuide from '../pages/UserGuide';
 import {
   Plus,
   Ticket,
@@ -21,6 +22,7 @@ import {
   Search,
   Shield,
   Database,
+  BookOpen,
 } from 'lucide-react';
 
 // Import your Lottie animation files
@@ -410,6 +412,20 @@ const Dashboard = () => {
                 </motion.button>
               )}
 
+              {/* User Guide Button */}
+<motion.button
+  onClick={() => navigate('/user-guide')}
+  className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+  title="User Guide"
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+>
+  <BookOpen className="w-5 h-5" />
+  <span className="absolute top-1 right-1 flex h-2 w-2">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+  </span>
+</motion.button>
               <div className="relative notification-dropdown">
                 <motion.button
                   onClick={handleBellClick}
@@ -611,6 +627,16 @@ const Dashboard = () => {
                   ? 'Manage All Tickets'
                   : 'View My Tickets'}
               </motion.button>
+              {/* User Guide in Quick Actions */}
+{/* <motion.button
+  onClick={() => navigate('/user-guide')}
+  className="w-full text-left px-4 py-3 text-sm font-medium text-[#ffffff] bg-[#219ebc] rounded-lg hover:bg-blue-100 transition-colors flex items-center cursor-pointer"
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+>
+  <BookOpen className="w-4 h-4 mr-2" />
+  User Guide
+</motion.button> */}
               
               {/* Admin Panel Button in Quick Actions */}
               {isAdmin() && (
