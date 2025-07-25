@@ -84,6 +84,12 @@ const AppRoutes = () => {
         }
       />
 
+      {/* Public User Guide - No login required */}
+      <Route
+        path="/user-guide"
+        element={<UserGuide />}
+      />
+
       {/* Protected Routes */}
       <Route
         path="/dashboard"
@@ -117,15 +123,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Admin />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/user-guide"
-        element={
-          <ProtectedRoute>
-            <UserGuide />
           </ProtectedRoute>
         }
       />
